@@ -15,4 +15,10 @@ public class ReturnRequest
     public StoreInspectionStatus StoreInspectionStatus { get; set; }
     public FraudReviewStatus FraudReviewStatus { get; set; }
     public RefundStatus RefundStatus { get; set; }
+
+    /// <summary>
+    /// Folio de devolución en SAP. Se asigna únicamente tras la aprobación de inspección
+    /// (ver ISapFolioClient) — nunca al iniciar la devolución.
+    /// </summary>
+    public string? SapFolioNumber { get; set; }
 }

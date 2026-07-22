@@ -29,10 +29,20 @@ public class ReturnsController : ControllerBase
         return CreatedAtAction(nameof(InitiateReturn), new { id = response.Id }, response);
     }
 
-    [HttpPost("{id:guid}/inspection")]
-    public async Task<ActionResult<ReturnRequestResponseDto>> RegisterStoreInspection(Guid id, InspectionResultDto dto)
+    [HttpPost("{id:guid}/receive")]
+    public async Task<ActionResult<ReturnRequestResponseDto>> ReceiveItem(Guid id)
     {
-        var request = await _workflowService.RegisterStoreInspectionAsync(id, dto.Status);
+        var request = await _workflowService.ReceiveItemAsync(id);
+        return Ok(ToResponseDto(request));
+    }
+
+    [HttpPost("{id:guid}/inspection")]
+    public async Task<ActionResult<ReturnRequestResponseDto>> RecordInspectionDecision(Guid id, InspectionDecisionDto dto)
+    {
+        var request = dto.Approved
+            ? await _workflowService.ApproveInspectionAsync(id)
+            : await _workflowService.RejectInspectionAsync(id);
+
         return Ok(ToResponseDto(request));
     }
 

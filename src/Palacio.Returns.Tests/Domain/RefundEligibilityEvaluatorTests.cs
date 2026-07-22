@@ -6,22 +6,68 @@ namespace Palacio.Returns.Tests.Domain;
 
 public class RefundEligibilityEvaluatorTests
 {
-    [Fact]
-    public void ReceivedItem_IsApprovedForRefund()
+    private static ReturnRequest CreateRequest(
+        StoreInspectionStatus storeInspectionStatus,
+        FraudReviewStatus fraudReviewStatus = FraudReviewStatus.NotRequired,
+        decimal purchaseAmount = 1200m) => new()
     {
-        var request = new ReturnRequest
-        {
-            Id = Guid.NewGuid(),
-            OrderId = "ORD-1",
-            CustomerId = "CUST-1",
-            ProductCategory = "Fashion",
-            PurchaseAmount = 1200m,
-            RequestedAt = DateTime.UtcNow,
-            EligibilityStatus = EligibilityStatus.Eligible,
-            StoreInspectionStatus = StoreInspectionStatus.Received,
-            FraudReviewStatus = FraudReviewStatus.NotRequired,
-            RefundStatus = RefundStatus.NotStarted
-        };
+        Id = Guid.NewGuid(),
+        OrderId = "ORD-1",
+        CustomerId = "CUST-1",
+        ProductCategory = "Fashion",
+        PurchaseAmount = purchaseAmount,
+        RequestedAt = DateTime.UtcNow,
+        EligibilityStatus = EligibilityStatus.Eligible,
+        StoreInspectionStatus = storeInspectionStatus,
+        FraudReviewStatus = fraudReviewStatus,
+        RefundStatus = RefundStatus.NotStarted
+    };
+
+    [Fact]
+    public void Regression_Nov2025Incident_ReceivedWithoutInspectionApproval_IsNotApproved()
+    {
+        // Ver docs/runbooks/incident-2025-11-return-fraud.md: recibido en tienda no equivale
+        // a inspección aprobada.
+        var request = CreateRequest(StoreInspectionStatus.Received);
+
+        Assert.False(RefundEligibilityEvaluator.IsRefundApproved(request));
+    }
+
+    [Fact]
+    public void InspectionApprovedAndFraudNotRequired_IsApproved()
+    {
+        var request = CreateRequest(StoreInspectionStatus.Approved);
+
+        Assert.True(RefundEligibilityEvaluator.IsRefundApproved(request));
+    }
+
+    [Fact]
+    public void InspectionApprovedButFraudBlocked_IsNotApproved()
+    {
+        var request = CreateRequest(StoreInspectionStatus.Approved, FraudReviewStatus.Blocked);
+
+        Assert.False(RefundEligibilityEvaluator.IsRefundApproved(request));
+    }
+
+    [Fact]
+    public void HighValueReturn_PendingFraudReview_IsNotApprovedEvenIfInspectionApproved()
+    {
+        var request = CreateRequest(
+            StoreInspectionStatus.Approved,
+            FraudReviewStatus.Pending,
+            purchaseAmount: 30_000m);
+
+        Assert.True(RefundEligibilityEvaluator.RequiresFraudReview(request));
+        Assert.False(RefundEligibilityEvaluator.IsRefundApproved(request));
+    }
+
+    [Fact]
+    public void HighValueReturn_FraudCleared_IsApproved()
+    {
+        var request = CreateRequest(
+            StoreInspectionStatus.Approved,
+            FraudReviewStatus.Cleared,
+            purchaseAmount: 30_000m);
 
         Assert.True(RefundEligibilityEvaluator.IsRefundApproved(request));
     }

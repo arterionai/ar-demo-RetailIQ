@@ -1,6 +1,8 @@
 using Palacio.Returns.Domain.Abstractions;
 using Palacio.Returns.Domain.Services;
+using Palacio.Returns.Infrastructure.Fraud;
 using Palacio.Returns.Infrastructure.Repositories;
+using Palacio.Returns.Infrastructure.Sap;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IReturnRequestRepository, InMemoryReturnRequestRepository>();
+builder.Services.AddScoped<IFraudReviewGateway, FraudReviewGateway>();
+builder.Services.AddScoped<ISapFolioClient, SapFolioClient>();
 builder.Services.AddScoped<ReturnWorkflowService>();
 
 var app = builder.Build();
