@@ -39,12 +39,23 @@ public class ReturnWorkflowService
         return request;
     }
 
-    public async Task<ReturnRequest> RegisterStoreInspectionAsync(Guid requestId, StoreInspectionStatus status)
+    /// <summary>
+    /// El artículo llegó físicamente a la tienda. Esto NO implica que la inspección haya sido
+    /// aprobada — ver ADR-014 e incidente de noviembre (docs/runbooks).
+    /// </summary>
+    public async Task<ReturnRequest> ReceiveItemAsync(Guid requestId)
     {
-        var request = await _repository.GetByIdAsync(requestId)
-            ?? throw new DomainException($"Return request {requestId} not found.");
+        var request = await GetRequestOrThrowAsync(requestId);
+        request.StoreInspectionStatus = StoreInspectionStatus.Received;
 
-        request.StoreInspectionStatus = status;
+        await _repository.UpdateAsync(request);
+        return request;
+    }
+
+    public async Task<ReturnRequest> ApproveInspectionAsync(Guid requestId)
+    {
+        var request = await GetRequestOrThrowAsync(requestId);
+        request.StoreInspectionStatus = StoreInspectionStatus.Approved;
         request.RefundStatus = RefundEligibilityEvaluator.IsRefundApproved(request)
             ? RefundStatus.Approved
             : request.RefundStatus;
@@ -52,4 +63,18 @@ public class ReturnWorkflowService
         await _repository.UpdateAsync(request);
         return request;
     }
+
+    public async Task<ReturnRequest> RejectInspectionAsync(Guid requestId)
+    {
+        var request = await GetRequestOrThrowAsync(requestId);
+        request.StoreInspectionStatus = StoreInspectionStatus.Rejected;
+        request.RefundStatus = RefundStatus.Denied;
+
+        await _repository.UpdateAsync(request);
+        return request;
+    }
+
+    private async Task<ReturnRequest> GetRequestOrThrowAsync(Guid requestId) =>
+        await _repository.GetByIdAsync(requestId)
+            ?? throw new DomainException($"Return request {requestId} not found.");
 }

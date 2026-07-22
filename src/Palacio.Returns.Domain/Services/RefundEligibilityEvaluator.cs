@@ -7,6 +7,7 @@ public static class RefundEligibilityEvaluator
 {
     public static bool IsRefundApproved(ReturnRequest request)
     {
-        return request.StoreInspectionStatus == StoreInspectionStatus.Received;
+        return request.StoreInspectionStatus == StoreInspectionStatus.Approved
+            && request.FraudReviewStatus != FraudReviewStatus.Blocked;
     }
 }
