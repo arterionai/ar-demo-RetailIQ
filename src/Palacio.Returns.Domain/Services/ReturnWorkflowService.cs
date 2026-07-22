@@ -10,15 +10,18 @@ public class ReturnWorkflowService
     private readonly IReturnRequestRepository _repository;
     private readonly IFraudReviewGateway _fraudReviewGateway;
     private readonly ISapFolioClient _sapFolioClient;
+    private readonly QrCodeService _qrCodeService;
 
     public ReturnWorkflowService(
         IReturnRequestRepository repository,
         IFraudReviewGateway fraudReviewGateway,
-        ISapFolioClient sapFolioClient)
+        ISapFolioClient sapFolioClient,
+        QrCodeService qrCodeService)
     {
         _repository = repository;
         _fraudReviewGateway = fraudReviewGateway;
         _sapFolioClient = sapFolioClient;
+        _qrCodeService = qrCodeService;
     }
 
     public async Task<ReturnRequest> InitiateReturnAsync(
@@ -74,6 +77,18 @@ public class ReturnWorkflowService
             request.RefundStatus = RefundStatus.Approved;
             request.SapFolioNumber = await _sapFolioClient.CreateFolioAsync(request);
         }
+
+        await _repository.UpdateAsync(request);
+        return request;
+    }
+
+    public async Task<ReturnRequest> IssueReturnQrCodeAsync(Guid requestId, DateTime issuedAtUtc)
+    {
+        var request = await GetRequestOrThrowAsync(requestId);
+        var qr = _qrCodeService.IssueReturnQrCode(request, issuedAtUtc);
+
+        request.QrToken = qr.Token;
+        request.QrExpiresAtUtc = qr.ExpiresAtUtc;
 
         await _repository.UpdateAsync(request);
         return request;

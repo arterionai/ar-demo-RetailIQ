@@ -10,7 +10,8 @@ public class ReturnWorkflowServiceTests
     private static ReturnWorkflowService CreateService() => new(
         new InMemoryReturnRequestRepository(),
         new FraudReviewGateway(),
-        new SapFolioClient());
+        new SapFolioClient(),
+        new QrCodeService());
 
     [Fact]
     public async Task SapFolio_IsNotCreated_OnReturnInitiation()

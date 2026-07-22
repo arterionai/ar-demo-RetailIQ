@@ -16,6 +16,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IReturnRequestRepository, InMemoryReturnRequestRepository>();
 builder.Services.AddScoped<IFraudReviewGateway, FraudReviewGateway>();
 builder.Services.AddScoped<ISapFolioClient, SapFolioClient>();
+builder.Services.AddScoped<QrCodeService>();
 builder.Services.AddScoped<ReturnWorkflowService>();
 
 var app = builder.Build();
