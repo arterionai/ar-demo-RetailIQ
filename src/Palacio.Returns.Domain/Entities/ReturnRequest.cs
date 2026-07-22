@@ -21,4 +21,11 @@ public class ReturnRequest
     /// (ver ISapFolioClient) — nunca al iniciar la devolución.
     /// </summary>
     public string? SapFolioNumber { get; set; }
+
+    /// <summary>
+    /// Token de QR para el piloto Polanco (vigencia de 72 horas). El payload nunca incluye
+    /// FraudReviewStatus — ver QrCodeService.
+    /// </summary>
+    public string? QrToken { get; set; }
+    public DateTime? QrExpiresAtUtc { get; set; }
 }

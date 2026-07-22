@@ -46,6 +46,13 @@ public class ReturnsController : ControllerBase
         return Ok(ToResponseDto(request));
     }
 
+    [HttpPost("{id:guid}/qr-code")]
+    public async Task<ActionResult<QrCodeResponseDto>> IssueQrCode(Guid id)
+    {
+        var request = await _workflowService.IssueReturnQrCodeAsync(id, DateTime.UtcNow);
+        return Ok(new QrCodeResponseDto(request.QrToken!, request.QrExpiresAtUtc!.Value));
+    }
+
     private static ReturnRequestResponseDto ToResponseDto(Domain.Entities.ReturnRequest request) => new(
         request.Id,
         request.OrderId,
