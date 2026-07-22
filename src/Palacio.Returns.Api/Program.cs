@@ -1,3 +1,7 @@
+using Palacio.Returns.Domain.Abstractions;
+using Palacio.Returns.Domain.Services;
+using Palacio.Returns.Infrastructure.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,6 +10,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<IReturnRequestRepository, InMemoryReturnRequestRepository>();
+builder.Services.AddScoped<ReturnWorkflowService>();
 
 var app = builder.Build();
 

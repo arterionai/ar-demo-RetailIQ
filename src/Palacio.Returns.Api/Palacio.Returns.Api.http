@@ -1,0 +1,6 @@
+@Palacio.Returns.Api_HostAddress = http://localhost:5163
+
+GET {{Palacio.Returns.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
