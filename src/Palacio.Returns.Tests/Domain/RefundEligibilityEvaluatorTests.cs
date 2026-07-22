@@ -48,4 +48,27 @@ public class RefundEligibilityEvaluatorTests
 
         Assert.False(RefundEligibilityEvaluator.IsRefundApproved(request));
     }
+
+    [Fact]
+    public void HighValueReturn_PendingFraudReview_IsNotApprovedEvenIfInspectionApproved()
+    {
+        var request = CreateRequest(
+            StoreInspectionStatus.Approved,
+            FraudReviewStatus.Pending,
+            purchaseAmount: 30_000m);
+
+        Assert.True(RefundEligibilityEvaluator.RequiresFraudReview(request));
+        Assert.False(RefundEligibilityEvaluator.IsRefundApproved(request));
+    }
+
+    [Fact]
+    public void HighValueReturn_FraudCleared_IsApproved()
+    {
+        var request = CreateRequest(
+            StoreInspectionStatus.Approved,
+            FraudReviewStatus.Cleared,
+            purchaseAmount: 30_000m);
+
+        Assert.True(RefundEligibilityEvaluator.IsRefundApproved(request));
+    }
 }
