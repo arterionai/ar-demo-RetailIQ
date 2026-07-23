@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+
+# Artefactos generados por `tsc -b` al compilar el proyecto node (tsconfig.node.json)
+# a partir de vite.config.ts — no deben commitearse.
+/vite.config.js
+/vite.config.d.ts
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
