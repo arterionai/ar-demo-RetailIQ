@@ -13,6 +13,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+const string DemoWebClients = "DemoWebClients";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(DemoWebClients, policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddSingleton<IReturnRequestRepository, InMemoryReturnRequestRepository>();
 builder.Services.AddScoped<IFraudReviewGateway, FraudReviewGateway>();
 builder.Services.AddScoped<ISapFolioClient, SapFolioClient>();
@@ -29,6 +40,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(DemoWebClients);
 
 app.UseAuthorization();
 
