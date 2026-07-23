@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  /* Palacio Operations Console — dark, luxury-leaning operations theme */
+  --p-bg: #0d0d10;
+  --p-surface: #16161b;
+  --p-overlay: #202027;
+  --p-border: #2c2c34;
+  --p-text: #ece8e1;
+  --p-text-secondary: #a7a2b3;
+  --p-text-muted: #7d7889;
+  --p-gold: #c9a94f;
+  --p-gold-soft: rgba(201, 169, 79, 0.15);
+  --p-blue: #4493f8;
+  --p-green: #3fb950;
+  --p-red: #f85149;
+  --p-yellow: #d29922;
+  --p-purple: #a371f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--p-bg);
+  color: var(--p-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--p-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--p-border);
+  border-radius: 8px;
+}
