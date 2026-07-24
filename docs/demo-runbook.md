@@ -55,19 +55,36 @@ explica "esto lo escribiría María").
 
 3. > ¿Ha ocurrido antes algún incidente relacionado con aprobar un reembolso demasiado pronto? ¿Qué aprendimos y qué controles debemos conservar?
    >
-   > **⚠️ Probado en vivo, con un hallazgo importante.** Encontró correctamente que hubo un
-   > incidente y los controles vigentes (inspección física obligatoria antes de reembolso,
-   > validación de elegibilidad, registro de aprobación/rechazo, antifraude, desacoplamiento del
-   > ERP). Pero dijo explícitamente que **no encontró una sección de "lecciones aprendidas" ni un
-   > postmortem formal** — y el postmortem sí existe
-   > (`00-CONFIDENCIAL-FraudeCompliance/Postmortem incidente noviembre 2025 (CONFIDENCIAL).md`).
-   > Esto es carpeta con permisos restringidos a propósito: si quien pregunta no tiene acceso, es
-   > el comportamiento CORRECTO (Work IQ respeta permisos, no inventa). Si quien pregunta SÍ
-   > debería tener acceso (ver checklist arriba) y aun así no aparece, es de nuevo el tema de
-   > indexado — volver a probar más cerca de la fecha.
+   > **✅ Verificado en vivo — y es una escena en dos actos, mejor que lo guionado originalmente.**
+   >
+   > **Acto 1 — preguntando sin acceso a la carpeta confidencial:** Work IQ encuentra
+   > correctamente el incidente y los controles vigentes (inspección física obligatoria antes de
+   > reembolso, validación de elegibilidad, registro de aprobación/rechazo, antifraude,
+   > desacoplamiento del ERP), pero dice explícitamente que **no encontró una sección de
+   > "lecciones aprendidas" ni un postmortem formal**. Este es el comportamiento CORRECTO — la
+   > carpeta `00-CONFIDENCIAL-FraudeCompliance` tiene permisos restringidos a propósito. Work IQ
+   > no inventa un documento que no puede ver.
+   >
+   > **Acto 2 — con permisos, preguntando explícitamente** ("checa si no ha habido ningún
+   > postmortem relacionado a las devoluciones"): Work IQ encuentra el postmortem y **dice él
+   > mismo por qué no había aparecido antes** — cita textual real: *"No estaba apareciendo en las
+   > búsquedas anteriores porque está marcado como confidencial."* Esta frase, dicha por el propio
+   > producto, es más fuerte que cualquier línea de guion que yo hubiera escrito — úsala tal cual
+   > en la presentación.
+   >
+   > Detalle real que sacó del postmortem (coincide con el código real del repo): causa raíz
+   > `RefundEligibilityEvaluator.IsRefundApproved` interpretando "recibido" como "aprobado", 41
+   > devoluciones procesadas de más, 6 de alto valor, ~MXN $380,000, y los 5 controles que nacieron
+   > de ese incidente (separar recibido/inspeccionado, prohibición de reembolso pre-inspección,
+   > antifraude para alto valor, orquestación obligatoria, pruebas de regresión).
+   >
+   > **Pendiente de retest, ya con permisos correctos:** la pregunta #2 de arriba (cuándo/por qué
+   > cambió la decisión de SAP) — no la hemos vuelto a correr desde que se otorgaron permisos a
+   > `jaime.sanchez@arterion.ai`. Probable que ahora sí salga completa (era indexado, no permisos).
 
 **Frase narrativa de cierre de escena:** "No estamos usando IA para inventar respuestas. Estamos
-usando IA para conectar la memoria de Palacio — y cuando no sabe algo con certeza, lo dice."
+usando IA para conectar la memoria de Palacio — y cuando no sabe algo con certeza, lo dice. Y
+cuando sí tiene permiso de saberlo, lo dice también, y explica por qué antes no podía."
 
 ---
 
@@ -123,10 +140,14 @@ estáticos de `historia.md` §6.2 — no requiere verificación adicional, no de
 
 ## Pendientes antes de la presentación real
 
-- [ ] Compartir el sitio SharePoint y la carpeta confidencial con la cuenta que realmente va a
-      presentar (ver checklist §0).
-- [ ] Re-correr las 3 preguntas de la Escena 1 cerca de la fecha de presentación, confirmar que ya
-      no falta el "cuándo/por qué" de ADR-014 ni el postmortem.
+- [x] Compartir el sitio SharePoint y la carpeta confidencial con `jaime.sanchez@arterion.ai` —
+      hecho; confirmado en vivo que ya encuentra el postmortem confidencial y explica por qué
+      antes no podía.
+- [ ] Re-correr la pregunta #2 de la Escena 1 (cuándo/por qué cambió la decisión de SAP) ahora que
+      los permisos ya están correctos — sigue pendiente de retest.
 - [ ] Redactar y ensayar el prompt exacto de la Escena 2 (Copilot/VS Code) — hoy solo hay un borrador.
 - [ ] Decidir si Mi Palacio y Operations Console comparten el mismo caso en vivo (hoy son procesos
       independientes con estado separado) o si se acepta mostrar casos distintos en cada uno.
+- [ ] Decidir explícitamente si la Escena 1 se presenta como "dos actos" (primero sin acceso a la
+      carpeta confidencial, luego con acceso) — recomendado, es más fuerte que preguntar una sola
+      vez ya con acceso completo desde el principio.
