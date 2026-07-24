@@ -3,6 +3,13 @@
  * Ninguna PII real: nombre, correo y pedido son inventados para esta demo.
  */
 
+export interface StoreAvailability {
+  store: string;
+  available: boolean;
+  /** Solo informativo, para que el concierge pueda ayudarla a decidir entre tiendas disponibles. */
+  note: string;
+}
+
 export interface OrderFixture {
   orderId: string;
   customerId: string;
@@ -16,6 +23,13 @@ export interface OrderFixture {
   purchaseDate: string;
   sku: string;
   deliveryStatus: string;
+  /**
+   * Disponibilidad de `requestedSize` por tienda — SIMULADA (no existe endpoint real de
+   * inventario). Única fuente de verdad de "en qué tiendas está disponible": el system prompt
+   * del concierge (ver server/concierge-prompt.js) la recibe tal cual y tiene prohibido inventar
+   * disponibilidad en tiendas fuera de esta lista.
+   */
+  availableStores: StoreAvailability[];
 }
 
 export const sofiaOrder: OrderFixture = {
@@ -31,7 +45,18 @@ export const sofiaOrder: OrderFixture = {
   purchaseDate: '2026-07-16',
   sku: 'VMB-0446-NGR',
   deliveryStatus: 'Entregado el 19 de julio',
+  availableStores: [
+    { store: 'Palacio Polanco', available: true, note: '2 piezas en piso, a 15 min del centro' },
+    { store: 'Palacio Santa Fe', available: true, note: '1 pieza en piso' },
+    { store: 'Palacio Perisur', available: false, note: 'agotada en esta talla' },
+    { store: 'Palacio Interlomas', available: false, note: 'agotada en esta talla' },
+  ],
 };
+
+/** Nombres de tienda con la talla solicitada realmente disponible — única lista válida para elegir. */
+export function availableStoreNames(order: Pick<OrderFixture, 'availableStores'>): string[] {
+  return order.availableStores.filter((s) => s.available).map((s) => s.store);
+}
 
 /**
  * Reserva de inventario — SIMULADA. No existe un endpoint real de inventario en

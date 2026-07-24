@@ -25,11 +25,12 @@ export const TOOLS = [
       name: SIZE_CHANGE_TOOL_NAME,
       description:
         'Invócala ÚNICAMENTE cuando la clienta ya confirmó explícitamente en el chat que quiere ' +
-        'proceder con el cambio de talla de su pedido actual (por ejemplo: "sí, quiero iniciar el ' +
-        'cambio"). Esta función NO decide elegibilidad ni ejecuta el cambio por sí misma — solo ' +
-        'señala la intención confirmada de la clienta para que el sistema real de devoluciones la ' +
-        'procese. El resultado de esta función te dirá qué pasó realmente (reserva, elegibilidad, ' +
-        'QR) para que se lo anuncies a la clienta.',
+        'proceder con el cambio de talla, Y ya eligió (o aceptó tu sugerencia de) una tienda de ' +
+        'entre las listadas como disponibles en los hechos de la orden. Esta función NO decide ' +
+        'elegibilidad ni ejecuta el cambio por sí misma — solo señala la intención confirmada de ' +
+        'la clienta (y la tienda elegida) para que el sistema real de devoluciones la procese. El ' +
+        'resultado de esta función te dirá qué pasó realmente (reserva, elegibilidad, QR) para que ' +
+        'se lo anuncies a la clienta.',
       parameters: {
         type: 'object',
         properties: {
@@ -38,10 +39,21 @@ export const TOOLS = [
             description:
               'Debe ser true — solo se invoca esta función cuando la clienta ya confirmó explícitamente.',
           },
+          tiendaElegida: {
+            type: 'string',
+            description:
+              'El nombre EXACTO de la tienda que la clienta eligió, tal como aparece en ' +
+              'availableStores de los hechos de la orden (solo tiendas con available=true). Nunca ' +
+              'inventes un nombre de tienda que no esté en esa lista.',
+          },
         },
-        required: ['confirmado'],
+        required: ['confirmado', 'tiendaElegida'],
         additionalProperties: false,
       },
+      // "strict" fuerza al modelo a llenar SIEMPRE todos los campos de "required" con el schema
+      // exacto (Structured Outputs) — sin esto, confirmamos empíricamente que el modelo a veces
+      // omite tiendaElegida aunque el schema la marque requerida.
+      strict: true,
     },
   },
 ];
@@ -65,10 +77,17 @@ export function buildSystemPrompt(order, { isOpeningTurn }) {
     'Reglas de negocio que debes respetar siempre:\n' +
       '- Tú NUNCA decides ni ejecutas directamente un cambio de talla o una devolución. Lo único ' +
       'que puedes hacer es invocar la función `iniciar_cambio_de_talla` cuando la clienta ya ' +
-      'confirmó explícitamente que quiere proceder — el sistema real de devoluciones es quien ' +
-      'valida elegibilidad, reserva inventario y genera el QR; tú no inventas esos resultados.\n' +
-      '- No propongas ni confirmes elegibilidad, montos de reembolso, o disponibilidad de ' +
-      'inventario en otra tienda que no sea la mencionada en los hechos de la orden.\n' +
+      'confirmó explícitamente que quiere proceder Y ya eligió tienda — el sistema real de ' +
+      'devoluciones es quien valida elegibilidad, reserva inventario y genera el QR; tú no ' +
+      'inventas esos resultados.\n' +
+      '- En cuanto quede claro que la clienta quiere cambiar de talla, dile PROACTIVAMENTE en qué ' +
+      'tiendas (de `availableStores`, solo las que tengan `available: true`) está disponible su ' +
+      'talla, para que pueda llevar la prenda directamente ahí — no esperes a que ella pregunte. ' +
+      'Si hay más de una tienda disponible, pídele que elija una antes de invocar la función; si ' +
+      'solo hay una disponible, puedes proponerla directamente y confirmar que le parece bien.\n' +
+      '- No propongas ni confirmes elegibilidad, montos de reembolso, ni disponibilidad de ' +
+      'inventario en ninguna tienda que no esté listada en `availableStores`, ni digas que hay ' +
+      'disponibilidad en una marcada como `available: false`.\n' +
       '- Por el tipo y valor del artículo, siempre aclara que un asesor en tienda deberá revisar ' +
       'físicamente la prenda antes de confirmar el cambio o reembolso.\n' +
       '- Si la clienta pide algo fuera de tu alcance (por ejemplo, un reembolso a una tarjeta ' +

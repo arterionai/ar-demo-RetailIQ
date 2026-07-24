@@ -1,10 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ChatMessage, ConciergeStatus, ConversationMessage, ToolCall } from '../types';
 import { ConciergeProxyError, sendConciergeTurn } from '../api/concierge-chat-client';
-import { generateQrCode, POLANCO_STORE, reserveReplacementSize, startReturnRequest } from '../api/concierge-actions';
+import { generateQrCode, reserveReplacementSize, startReturnRequest } from '../api/concierge-actions';
 import { ReturnsApiError } from '../../../lib/returns-api-client';
 import { useAppState } from '../../../lib/app-state';
-import { sofiaOrder } from '../../../lib/order-fixture';
+import { availableStoreNames, sofiaOrder } from '../../../lib/order-fixture';
 
 // ADR-014 (no negociable): el LLM nunca decide ni ejecuta el cambio/devolución directamente.
 // Cuando el modelo invoca esta tool, es ESTE HOOK (frontend) el que dispara las llamadas reales
@@ -49,9 +49,45 @@ export function useConciergeChat() {
     setUiMessages((prev) => [...prev, { id: nextId(), author, text, attachConfirmation }]);
   }, []);
 
+  /**
+   * Tienda elegida: primero se intenta leer `tiendaElegida` del tool call; en la práctica hemos
+   * visto que el modelo a veces la omite pese a estar marcada como requerida y con `strict:true`
+   * en el schema, así que como respaldo buscamos el nombre de una tienda disponible mencionado en
+   * los mensajes recientes de la clienta (de más reciente a más antiguo), y solo si nada de eso
+   * aparece, caemos a la primera tienda disponible de la lista.
+   */
+  const resolveChosenStore = useCallback((toolCall: ToolCall, recentHistory: ConversationMessage[]): string => {
+    const validStores = availableStoreNames(sofiaOrder);
+
+    try {
+      const args = JSON.parse(toolCall.function.arguments || '{}');
+      if (typeof args.tiendaElegida === 'string' && validStores.includes(args.tiendaElegida)) {
+        return args.tiendaElegida;
+      }
+    } catch {
+      // arguments no era JSON válido — seguimos con el respaldo de abajo.
+    }
+
+    const userTexts = recentHistory
+      .filter((m) => m.role === 'user' && typeof m.content === 'string')
+      .map((m) => (m.content as string).toLowerCase())
+      .reverse();
+    for (const text of userTexts) {
+      const match = validStores.find((store) => text.includes(store.toLowerCase().replace('palacio ', '')));
+      if (match) return match;
+    }
+
+    return validStores[0];
+  }, []);
+
   /** Ejecuta la tool `iniciar_cambio_de_talla`: llamadas reales, en el mismo orden que antes. */
   const executeSizeChangeTool = useCallback(
-    async (toolCallId: string): Promise<{ result: ConversationMessage; succeeded: boolean }> => {
+    async (
+      toolCall: ToolCall,
+      recentHistory: ConversationMessage[],
+    ): Promise<{ result: ConversationMessage; succeeded: boolean }> => {
+      const toolCallId = toolCall.id;
+      const chosenStore = resolveChosenStore(toolCall, recentHistory);
       const current = caseStateRef.current;
       if (current.reservation && current.qrCode) {
         // Ya se completó antes en esta misma conversación — no repetir POST /api/returns.
@@ -72,9 +108,9 @@ export function useConciergeChat() {
       }
 
       try {
-        pushUi('system', `Reservando talla ${sofiaOrder.requestedSize} en ${POLANCO_STORE}...`);
-        const reservation = await reserveReplacementSize(sofiaOrder.requestedSize, POLANCO_STORE);
-        setReservation(reservation, POLANCO_STORE);
+        pushUi('system', `Reservando talla ${sofiaOrder.requestedSize} en ${chosenStore}...`);
+        const reservation = await reserveReplacementSize(sofiaOrder.requestedSize, chosenStore);
+        setReservation(reservation, chosenStore);
 
         pushUi('system', 'Validando elegibilidad con Returns Orchestrator...');
         const returnRequest = await startReturnRequest(sofiaOrder);
@@ -113,11 +149,14 @@ export function useConciergeChat() {
         };
       }
     },
-    [pushUi, setQrCode, setReservation, setReturnRequest],
+    [pushUi, resolveChosenStore, setQrCode, setReservation, setReturnRequest],
   );
 
   const executeToolCalls = useCallback(
-    async (toolCalls: ToolCall[]): Promise<{ results: ConversationMessage[]; anySucceeded: boolean }> => {
+    async (
+      toolCalls: ToolCall[],
+      recentHistory: ConversationMessage[],
+    ): Promise<{ results: ConversationMessage[]; anySucceeded: boolean }> => {
       const results: ConversationMessage[] = [];
       let anySucceeded = false;
 
@@ -132,7 +171,7 @@ export function useConciergeChat() {
           continue;
         }
 
-        const { result, succeeded } = await executeSizeChangeTool(call.id);
+        const { result, succeeded } = await executeSizeChangeTool(call, recentHistory);
         results.push(result);
         anySucceeded = anySucceeded || succeeded;
       }
@@ -171,7 +210,7 @@ export function useConciergeChat() {
           }
 
           setStatus('executing-tool');
-          const { results, anySucceeded } = await executeToolCalls(toolCalls);
+          const { results, anySucceeded } = await executeToolCalls(toolCalls, workingHistory);
           workingHistory = [...workingHistory, ...results];
           setStatus('sending');
           attachConfirmationToNextMessage = anySucceeded;

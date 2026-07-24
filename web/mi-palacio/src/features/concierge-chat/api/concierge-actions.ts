@@ -2,8 +2,6 @@ import { initiateReturn, issueQrCode } from '../../../lib/returns-api-client';
 import { reserveSizeLocally } from '../../../lib/order-fixture';
 import type { OrderFixture } from '../../../lib/order-fixture';
 
-export const POLANCO_STORE = 'Palacio Polanco';
-
 /**
  * "Reservar talla en tienda" — SIMULADO localmente (no existe endpoint de inventario en
  * Palacio.Returns.Api hoy). Ver order-fixture.ts para el detalle de la simulación.
