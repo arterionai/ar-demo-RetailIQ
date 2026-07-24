@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_RETURNS_API_BASE_URL?: string;
+  readonly VITE_CONCIERGE_PROXY_URL?: string;
 }
 
 interface ImportMeta {

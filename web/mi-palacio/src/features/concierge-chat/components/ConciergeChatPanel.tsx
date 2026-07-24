@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { useConciergeFlow } from '../hooks/useConciergeFlow';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useConciergeChat } from '../hooks/useConciergeChat';
 import { ChatBubble } from './ChatBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { ConfirmationScreen } from './ConfirmationScreen';
@@ -9,28 +9,39 @@ interface ConciergeChatPanelProps {
   onClose: () => void;
 }
 
-const BUSY_PHASES = new Set(['reserving-size', 'validating-eligibility', 'issuing-qr']);
-
 export function ConciergeChatPanel({ onClose }: ConciergeChatPanelProps) {
-  const { messages, phase, errorMessage, start, acceptExchange, decline } = useConciergeFlow();
+  const { messages, isBusy, errorMessage, start, sendMessage } = useConciergeChat();
   const { caseState, goTo } = useAppState();
+  const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    void start();
+    start();
   }, [start]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, phase]);
+  }, [messages, isBusy]);
 
-  const isBusy = BUSY_PHASES.has(phase);
-  const showChoiceButtons = phase === 'awaiting-start-decision';
-  const showConfirmation = phase === 'ready-for-confirmation' && caseState.reservation && caseState.qrCode;
+  useEffect(() => {
+    if (!isBusy) {
+      inputRef.current?.focus();
+    }
+  }, [isBusy]);
+
+  const hasReadyReservation = Boolean(caseState.reservation && caseState.qrCode);
 
   const handleViewStatus = () => {
     goTo('return-status');
     onClose();
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!draft.trim() || isBusy) return;
+    sendMessage(draft);
+    setDraft('');
   };
 
   return (
@@ -46,7 +57,7 @@ export function ConciergeChatPanel({ onClose }: ConciergeChatPanelProps) {
       >
         <div className="flex items-center justify-between border-b border-palacio-gold/30 bg-palacio-black px-5 py-4 text-palacio-cream">
           <div>
-            <p className="font-serif text-lg">Concierge Postcompra</p>
+            <p className="font-serif text-lg italic">Concierge Postcompra</p>
             <p className="text-[11px] uppercase tracking-[0.2em] text-palacio-gold/80">
               Aquí para resolverlo contigo
             </p>
@@ -62,51 +73,71 @@ export function ConciergeChatPanel({ onClose }: ConciergeChatPanelProps) {
           </button>
         </div>
 
-        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-5 py-5">
+        <div
+          ref={scrollRef}
+          className="flex-1 space-y-3 overflow-y-auto px-5 py-5"
+          role="log"
+          aria-live="polite"
+          aria-label="Conversación con el Concierge Postcompra"
+          data-testid="concierge-message-log"
+        >
           {messages.map((message) => (
-            <ChatBubble key={message.id} message={message} />
+            <div key={message.id}>
+              <ChatBubble message={message} />
+              {message.attachConfirmation && hasReadyReservation && caseState.reservation && caseState.qrCode && (
+                <div className="mt-3">
+                  <ConfirmationScreen
+                    reservation={caseState.reservation}
+                    qrCode={caseState.qrCode}
+                    onViewStatus={handleViewStatus}
+                  />
+                </div>
+              )}
+            </div>
           ))}
 
           {isBusy && <TypingIndicator />}
-
-          {showConfirmation && caseState.reservation && caseState.qrCode && (
-            <ConfirmationScreen
-              reservation={caseState.reservation}
-              qrCode={caseState.qrCode}
-              onViewStatus={handleViewStatus}
-            />
-          )}
 
           {errorMessage && (
             <p
               className="rounded-sm border border-red-300 bg-red-50 p-3 text-xs text-red-700"
               data-testid="concierge-error-message"
+              role="alert"
             >
               {errorMessage}
             </p>
           )}
         </div>
 
-        {showChoiceButtons && (
-          <div className="flex gap-3 border-t border-palacio-gold/20 px-5 py-4">
-            <button
-              type="button"
-              onClick={() => void acceptExchange()}
-              data-testid="accept-exchange-button"
-              className="flex-1 rounded-sm bg-palacio-black px-4 py-3 text-sm font-medium uppercase tracking-[0.1em] text-palacio-cream transition hover:bg-palacio-charcoal"
-            >
-              Sí, iniciar el cambio
-            </button>
-            <button
-              type="button"
-              onClick={decline}
-              data-testid="decline-exchange-button"
-              className="flex-1 rounded-sm border border-palacio-ink/20 px-4 py-3 text-sm font-medium uppercase tracking-[0.1em] text-palacio-ink transition hover:bg-palacio-cream-dark"
-            >
-              No, gracias
-            </button>
-          </div>
-        )}
+        <form
+          onSubmit={handleSubmit}
+          className="flex gap-2 border-t border-palacio-gold/20 bg-white px-4 py-3"
+          data-testid="concierge-message-form"
+        >
+          <label htmlFor="concierge-message-input" className="sr-only">
+            Escribe tu mensaje para el Concierge Postcompra
+          </label>
+          <input
+            id="concierge-message-input"
+            ref={inputRef}
+            type="text"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Escribe tu mensaje..."
+            disabled={isBusy}
+            autoComplete="off"
+            data-testid="concierge-message-input"
+            className="flex-1 rounded-full border border-palacio-ink/15 bg-palacio-cream px-4 py-2.5 text-sm text-palacio-ink placeholder:text-palacio-muted focus:border-palacio-gold focus:outline-none disabled:opacity-60"
+          />
+          <button
+            type="submit"
+            disabled={isBusy || !draft.trim()}
+            data-testid="send-message-button"
+            className="rounded-full bg-palacio-black px-5 py-2.5 text-xs font-medium uppercase tracking-[0.15em] text-palacio-cream transition hover:bg-palacio-charcoal disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Enviar
+          </button>
+        </form>
       </div>
     </div>
   );

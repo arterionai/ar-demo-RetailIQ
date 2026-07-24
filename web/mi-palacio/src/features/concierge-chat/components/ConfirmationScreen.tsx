@@ -23,7 +23,7 @@ export function ConfirmationScreen({ reservation, qrCode, onViewStatus }: Confir
         <p className="text-xs uppercase tracking-[0.25em] text-palacio-gold">
           Talla {reservation.size} reservada hasta mañana, 6:00 p. m.
         </p>
-        <h2 className="mt-2 font-serif text-2xl" data-testid="confirmation-store">
+        <h2 className="mt-2 font-serif text-2xl italic" data-testid="confirmation-store">
           {reservation.store}
         </h2>
       </div>

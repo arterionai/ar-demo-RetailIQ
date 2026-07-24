@@ -131,11 +131,24 @@ Console) se fija la siguiente decisión, alineada con lo ya sugerido en `histori
   visualmente (p. ej. Material UI) que sea difícil de personalizar hacia una estética de lujo.
 - **Cliente HTTP**: `fetch` nativo o `axios` con un cliente tipado fino sobre los DTOs que ya
   expone `Palacio.Returns.Api` (reusar los contratos, no reinventarlos en el frontend).
-- **Chatbot concierge (Mi Palacio) y widgets conversacionales (Operations Console)**: la UI del
-  chat es responsabilidad del frontend; la lógica conversacional/orquestación de IA vive fuera
-  de este repo (Copilot Studio / Teams AI Library / Work IQ, según se defina en la Fase 2) y se
-  consume como servicio. El frontend no debe embeber reglas de negocio de devoluciones — esas
-  siguen viviendo en `Palacio.Returns.Domain` vía la API.
+- **Chatbot concierge (Mi Palacio)**: revisado por el stakeholder — para esta demo, la lógica
+  conversacional del Concierge Postcompra SÍ vive dentro de este repo, como un proxy Node/Express
+  propio en `web/mi-palacio/server/` (proyecto Node independiente del build de Vite, con su
+  propio `package.json`). El proxy recibe el historial de la conversación (`POST
+  /api/concierge/chat`), agrega el system prompt (personalidad + hechos de la orden actual,
+  tomados de `src/lib/order-fixture.ts` para no duplicarlos) y llama a Azure OpenAI (chat
+  completions, `gpt-4.1-mini`). La API key de Azure OpenAI vive únicamente en el proceso del
+  proxy (leída de variables de entorno / `~/.espejo-demo/azure-openai.env` en desarrollo local) y
+  nunca llega al bundle del frontend. El frontend sigue sin embeber reglas de negocio de
+  devoluciones: el modelo nunca decide ni ejecuta un cambio/devolución directamente (ADR-014) —
+  solo puede invocar una tool sin parámetros de negocio sensibles (`iniciar_cambio_de_talla`) que
+  señala la intención confirmada de la clienta; es el frontend quien, al recibir esa tool call,
+  dispara las llamadas reales ya existentes contra `Palacio.Returns.Api` (`POST /api/returns`,
+  `POST /api/returns/{id}/qr-code`) — la lógica de negocio de devoluciones (elegibilidad,
+  reembolso) sigue viviendo exclusivamente en `Palacio.Returns.Domain`. Los widgets
+  conversacionales de Operations Console (fuera de alcance de esta demo) no están cubiertos por
+  esta decisión y podrían resolverse distinto (Copilot Studio / Teams AI Library / Work IQ) si se
+  construyen más adelante.
 
 ### 3.2 Estructura de carpetas por superficie
 

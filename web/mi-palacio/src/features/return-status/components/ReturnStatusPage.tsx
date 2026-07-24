@@ -31,8 +31,8 @@ export function ReturnStatusPage() {
 
   if (!returnRequest) {
     return (
-      <div className="palacio-fade-up rounded-sm border border-palacio-gold/20 bg-white/60 p-10 text-center" data-testid="return-status-empty">
-        <p className="font-serif text-xl text-palacio-ink">Aún no tienes una devolución en curso</p>
+      <div className="palacio-fade-up rounded-sm border border-palacio-gold/20 bg-white p-10 text-center" data-testid="return-status-empty">
+        <p className="font-serif text-xl italic text-palacio-ink">Aún no tienes una devolución en curso</p>
         <p className="mt-2 text-sm text-palacio-muted">
           Inicia una conversación con el Concierge Postcompra desde el detalle de tu pedido.
         </p>
@@ -54,13 +54,13 @@ export function ReturnStatusPage() {
         Mis pedidos &nbsp;/&nbsp; {sofiaOrder.orderId} &nbsp;/&nbsp; Estatus de devolución
       </nav>
 
-      <div className="rounded-sm border border-palacio-gold/20 bg-white/60 p-8">
+      <div className="rounded-sm border border-palacio-gold/20 bg-white p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-palacio-gold-dark">
               Solicitud {returnRequest.id.slice(0, 8)}
             </p>
-            <h1 className="mt-1 font-serif text-2xl text-palacio-ink">
+            <h1 className="mt-1 font-serif text-2xl italic text-palacio-ink">
               {sofiaOrder.productName}
             </h1>
           </div>
@@ -108,7 +108,7 @@ export function ReturnStatusPage() {
         data-testid="live-tracking-coming-soon"
       >
         <p className="text-xs uppercase tracking-[0.25em] text-palacio-gold-dark">Próximamente</p>
-        <p className="mt-2 font-serif text-xl text-palacio-ink">Seguimiento en tiempo real</p>
+        <p className="mt-2 font-serif text-xl italic text-palacio-ink">Seguimiento en tiempo real</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-palacio-muted">
           Muy pronto podrás consultar el estatus más reciente de tu devolución directamente desde
           la tienda — recepción, inspección y reembolso — sin salir de Mi Palacio.

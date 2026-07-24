@@ -26,7 +26,7 @@ export function QrCodeCard({ token, expiresAtUtc }: QrCodeCardProps) {
       data-testid="qr-code-card"
     >
       <div ref={canvasWrapperRef} className="rounded-sm bg-white p-3 shadow-gold">
-        <QRCodeCanvas value={token} size={168} fgColor="#12100E" bgColor="#FFFFFF" level="M" />
+        <QRCodeCanvas value={token} size={168} fgColor="#181818" bgColor="#FFFFFF" level="M" />
       </div>
       <p className="text-center text-xs text-palacio-muted">
         Válido hasta {formatDateTimeEsMx(expiresAtUtc)}
