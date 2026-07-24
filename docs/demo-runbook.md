@@ -88,10 +88,6 @@ explica "esto lo escribiría María").
    > devoluciones procesadas de más, 6 de alto valor, ~MXN $380,000, y los 5 controles que nacieron
    > de ese incidente (separar recibido/inspeccionado, prohibición de reembolso pre-inspección,
    > antifraude para alto valor, orquestación obligatoria, pruebas de regresión).
-   >
-   > **Pendiente de retest, ya con permisos correctos:** la pregunta #2 de arriba (cuándo/por qué
-   > cambió la decisión de SAP) — no la hemos vuelto a correr desde que se otorgaron permisos a
-   > `jaime.sanchez@arterion.ai`. Probable que ahora sí salga completa (era indexado, no permisos).
 
 **Frase narrativa de cierre de escena:** "No estamos usando IA para inventar respuestas. Estamos
 usando IA para conectar la memoria de Palacio — y cuando no sabe algo con certeza, lo dice. Y
@@ -102,19 +98,52 @@ cuando sí tiene permiso de saberlo, lo dice también, y explica por qué antes 
 ## Escena 2 — Jorge construye el endpoint en vivo (VS Code + GitHub Copilot)
 
 **Quién actúa:** Jorge Ramírez (o el presentador en su nombre), en VS Code con Copilot Agent Mode
-abierto sobre el repo `arterionai/ar-demo-RetailIQ`.
+abierto sobre el repo `arterionai/ar-demo-RetailIQ`, con el endpoint `GET /api/returns/{id}`
+**todavía sin existir en `main`** — eso es lo que se construye en vivo.
 
-**Qué escribir a Copilot** (pendiente de redactar el prompt final y ensayar — **no verificado
-aún**, ver conversación para acordar la versión exacta):
+**Qué escribir a Copilot** (✅ ensayado en un worktree aislado, descartado después — build y tests
+en verde a la primera; ver nota de ambigüedad resuelta abajo):
 
-> Con el contexto de ADR-014 y el incidente de noviembre que acabamos de reconstruir, agrega el
-> endpoint que falta para consultar el estatus de una devolución (`GET /api/returns/{id}`).
-> Respeta las mismas reglas de capas del proyecto y agrega su prueba.
+> Con el contexto que Work IQ acaba de reconstruir sobre devoluciones omnicanal — ADR-014 (todo
+> pasa por Returns Orchestrator, ningún canal de cliente decide el reembolso, SAP solo participa
+> después de la inspección aprobada) y el incidente de noviembre 2025 (recibido ≠ aprobado,
+> revisión antifraude obligatoria para montos > MXN $25,000) — agrega el endpoint que falta hoy:
+> consultar el estatus de una devolución por ID.
+>
+> Requisitos:
+> - `GET /api/returns/{id}` en `Palacio.Returns.Api`, devolviendo el mismo
+>   `ReturnRequestResponseDto` que ya usan los demás endpoints.
+> - **Inyecta `IReturnRequestRepository` directamente en el controller**, junto al
+>   `ReturnWorkflowService` ya existente — no agregues un método de paso en el servicio. Sin
+>   lógica de negocio nueva en el controller.
+> - 404 si el ID no existe.
+> - Agrega un test en `Palacio.Returns.Tests`.
+> - Prepara un mensaje de PR breve citando ADR-014 y el incidente de noviembre como contexto de
+>   por qué este endpoint es de solo lectura.
 
-**Qué debería pasar:** Copilot genera el endpoint en `Palacio.Returns.Api`, un test en
-`Palacio.Returns.Tests`, y idealmente un PR draft citando ADR-014 y el incidente.
+**Nota sobre la línea en negritas:** el ensayo reveló que sin esa instrucción explícita, Copilot
+tiene que decidir entre dos diseños igual de válidos (inyectar el repo directo, o agregar un
+método de paso en `ReturnWorkflowService`) — una pausa de diseño evitable en vivo. Ya viene resuelta
+en el prompt de arriba.
 
-**Acción pendiente:** ensayar esta escena antes de presentar — aún no la hemos corrido en vivo.
+**Qué debería pasar (verificado en el ensayo):**
+- Nuevo `GetReturnStatus` en `ReturnsController.cs`, reutilizando el `ToResponseDto` privado ya
+  existente — sin duplicar lógica.
+- `IReturnRequestRepository.GetByIdAsync` ya existía (Copilot no tuvo que inventarlo ni asumir que
+  hacía falta agregarlo — buena señal de "revisa antes de asumir").
+- 2 tests nuevos seguiendo la convención `MethodName_Should[Expected]_When[Condition]`:
+  `GetReturnStatus_ReturnsOkWithDto_WhenRequestExists`,
+  `GetReturnStatus_ReturnsNotFound_WhenRequestDoesNotExist`.
+- `dotnet build` + `dotnet test`: **11/11 en verde**, sin ciclo de fix.
+- Texto de PR redactado citando ADR-014 y el runbook del incidente, explicando por qué el endpoint
+  es deliberadamente de solo lectura (no reintroduce la ambigüedad recibido/aprobado del incidente).
+
+**Timing:** en el ensayo, lectura de contexto + implementación + verificación fue rápido y sin
+ciclo de debugging — cómodo para el tiempo de una demo en vivo.
+
+**Importante para preservar el momento en vivo:** este ensayo se hizo en un worktree aislado que
+ya se descartó — `main` sigue sin el endpoint. No lo repitas en `main` antes de la presentación
+real, o se pierde el efecto de "construcción en vivo".
 
 ---
 
@@ -157,7 +186,8 @@ estáticos de `historia.md` §6.2 — no requiere verificación adicional, no de
 - [x] Re-correr la pregunta #2 de la Escena 1 (cuándo/por qué cambió la decisión de SAP) — hecho;
       ya sale completa con fecha, razones y el matiz gobernanza-vs-enforcement-en-código. **La
       Escena 1 completa está verificada en vivo.**
-- [ ] Redactar y ensayar el prompt exacto de la Escena 2 (Copilot/VS Code) — hoy solo hay un borrador.
+- [x] Redactar y ensayar el prompt exacto de la Escena 2 (Copilot/VS Code) — hecho, en worktree
+      aislado y descartado; build+test en verde, `main` sigue sin el endpoint para el momento en vivo.
 - [ ] Decidir si Mi Palacio y Operations Console comparten el mismo caso en vivo (hoy son procesos
       independientes con estado separado) o si se acepta mostrar casos distintos en cada uno.
 - [ ] Decidir explícitamente si la Escena 1 se presenta como "dos actos" (primero sin acceso a la
