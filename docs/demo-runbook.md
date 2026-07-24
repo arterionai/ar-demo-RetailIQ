@@ -44,14 +44,25 @@ explica "esto lo escribiría María").
    > Castro, Laura Martínez, Ana Sofía Ruiz, Carlos Vega). Fuente citada: SharePoint (política
    > vigente, customer journey, arquitectura objetivo, research de clientes, RACI).
 
-2. > Encontré información contradictoria sobre si la app puede conectarse directamente a SAP. ¿Cuál es la decisión vigente, cuándo cambió y por qué?
+2. > Encontré información contradictoria sobre si la app puede conectarse directamente a SAP. ¿Cuál es la decisión vigente, cuándo cambió y por qué? / (seguimiento) ¿Por qué cambió la decisión de SAP?
    >
-   > **⚠️ Probado en vivo, pero incompleto la primera vez.** La decisión vigente (App →
-   > Orchestrator → SAP, nunca directo) sí salió bien. El "cuándo" (22 de septiembre de 2025) y el
-   > "por qué" (propuesta de Pedro Molina del 15 de septiembre, descartada en la revisión de
-   > arquitectura) **no salieron** — pero el contenido SÍ existe completo en `ADR-014
-   > Orquestacion de devoluciones.md` y `Recap canal Arquitectura.md` (lo confirmé leyendo ambos
-   > documentos directamente). Volver a probar esta pregunta cerca de la fecha de presentación.
+   > **✅ Verificado en vivo — confirma que era indexado, no permisos.** Al reintentar más tarde,
+   > Work IQ ya cita todo completo: la propuesta original (conectar la app directo a SAP para
+   > simplificar y acelerar el desarrollo), que se discutió y descartó en la revisión de
+   > arquitectura del **22 de septiembre de 2025**, y las 5 razones documentadas (desacoplar
+   > móvil/ERP, auditoría centralizada, manejo de errores sin duplicar lógica por canal, antifraude
+   > consistente, trazabilidad completa) más la restricción de Daniel Castro ("SAP no puede recibir
+   > solicitudes incompletas").
+   >
+   > **Matiz importante que Work IQ corrigió solo, mejor que el guion original:** el ADR-014 (22 de
+   > septiembre) **ya existía antes** del incidente de noviembre — no fue una reacción al
+   > incidente. Lo que pasó es que la regla "el móvil nunca decide la aprobación" no era verificable
+   > en code review porque el ADR **no estaba referenciado desde el repositorio de código todavía**.
+   > La acción correctiva del postmortem fue justamente incorporar el ADR-014 al repo como
+   > referencia obligatoria en los PRs — que es exactamente lo que existe hoy en
+   > `docs/adr/ADR-014-returns-orchestration.md` y las referencias en las PRs reales del repo. Usa
+   > esta versión (gobernanza-sin-enforcement-en-código, no "cambio de opinión post-incidente") al
+   > narrar la escena — es más precisa y más interesante.
 
 3. > ¿Ha ocurrido antes algún incidente relacionado con aprobar un reembolso demasiado pronto? ¿Qué aprendimos y qué controles debemos conservar?
    >
@@ -143,8 +154,9 @@ estáticos de `historia.md` §6.2 — no requiere verificación adicional, no de
 - [x] Compartir el sitio SharePoint y la carpeta confidencial con `jaime.sanchez@arterion.ai` —
       hecho; confirmado en vivo que ya encuentra el postmortem confidencial y explica por qué
       antes no podía.
-- [ ] Re-correr la pregunta #2 de la Escena 1 (cuándo/por qué cambió la decisión de SAP) ahora que
-      los permisos ya están correctos — sigue pendiente de retest.
+- [x] Re-correr la pregunta #2 de la Escena 1 (cuándo/por qué cambió la decisión de SAP) — hecho;
+      ya sale completa con fecha, razones y el matiz gobernanza-vs-enforcement-en-código. **La
+      Escena 1 completa está verificada en vivo.**
 - [ ] Redactar y ensayar el prompt exacto de la Escena 2 (Copilot/VS Code) — hoy solo hay un borrador.
 - [ ] Decidir si Mi Palacio y Operations Console comparten el mismo caso en vivo (hoy son procesos
       independientes con estado separado) o si se acepta mostrar casos distintos en cada uno.
