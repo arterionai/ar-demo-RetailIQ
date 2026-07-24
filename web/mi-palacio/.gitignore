@@ -14,3 +14,7 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+
+# Captura cruda de referencia visual de palaciodehierro.com (uso interno, no distribuir/commitear
+# — ver docs/constitution.md §7.2). Solo assets puntuales extraídos de aquí se copian a src/.
+brand-reference/
