@@ -2,34 +2,26 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Palacio.Returns.Api.DTOs;
 using Palacio.Returns.Api.Hubs;
-using Palacio.Returns.Domain.Abstractions;
 using Palacio.Returns.Domain.Services;
 
 namespace Palacio.Returns.Api.Controllers;
 
+// TODO(demo-live-build): falta GET /api/returns/{id} — se construye en vivo con GitHub Copilot
+// como clímax de la demo (ver docs/demo-runbook.md, Escena 2). IReturnRequestRepository ya expone
+// GetByIdAsync; no hace falta agregar nada al dominio, solo el endpoint aquí.
 [ApiController]
 [Route("api/returns")]
 public class ReturnsController : ControllerBase
 {
     private readonly ReturnWorkflowService _workflowService;
-    private readonly IReturnRequestRepository _repository;
     private readonly IHubContext<ReturnStatusHub> _statusHub;
 
     public ReturnsController(
         ReturnWorkflowService workflowService,
-        IReturnRequestRepository repository,
         IHubContext<ReturnStatusHub> statusHub)
     {
         _workflowService = workflowService;
-        _repository = repository;
         _statusHub = statusHub;
-    }
-
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ReturnRequestResponseDto>> GetReturnStatus(Guid id)
-    {
-        var request = await _repository.GetByIdAsync(id);
-        return request is null ? NotFound() : Ok(ToResponseDto(request));
     }
 
     [HttpPost]

@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 import {
   createReturnRequest,
   receiveReturnItem,
-  searchReturnByFolio,
   submitInspectionDecision,
 } from "../../../lib/api-client";
 import type { ReturnRequestResponseDto } from "../../../lib/types";
@@ -47,14 +46,11 @@ interface ReturnCasesContextValue {
   cases: ReturnRequestResponseDto[];
   selectedCaseId: string | null;
   isLoadingSamples: boolean;
-  isSearchingFolio: boolean;
-  folioNotFound: boolean;
   actionError: string | null;
   pendingActionId: string | null;
   hasLoadedSamples: boolean;
   selectCase: (id: string) => void;
   loadSampleCases: () => Promise<void>;
-  searchFolio: (id: string) => Promise<void>;
   receiveItem: (id: string) => Promise<void>;
   submitInspection: (id: string, approved: boolean) => Promise<void>;
   dismissError: () => void;
@@ -66,8 +62,6 @@ export function ReturnCasesProvider({ children }: { children: ReactNode }) {
   const [cases, setCases] = useState<ReturnRequestResponseDto[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [isLoadingSamples, setIsLoadingSamples] = useState(false);
-  const [isSearchingFolio, setIsSearchingFolio] = useState(false);
-  const [folioNotFound, setFolioNotFound] = useState(false);
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [hasLoadedSamples, setHasLoadedSamples] = useState(false);
@@ -109,38 +103,6 @@ export function ReturnCasesProvider({ children }: { children: ReactNode }) {
   const selectCase = useCallback((id: string) => {
     setSelectedCaseId(id);
   }, []);
-
-  /**
-   * "Buscar por folio" — trae un caso REAL ya existente (ej. el que una clienta creó desde Mi
-   * Palacio) vía GET /api/returns/{id}, en vez de crear uno nuevo. Es lo que conecta el caso de
-   * la clienta con la vista del asociado sin que compartan estado de navegador.
-   */
-  const searchFolio = useCallback(
-    async (id: string) => {
-      const trimmed = id.trim();
-      if (!trimmed) return;
-
-      setIsSearchingFolio(true);
-      setFolioNotFound(false);
-      setActionError(null);
-      try {
-        const found = await searchReturnByFolio(trimmed);
-        if (found) {
-          upsertCase(found);
-          setSelectedCaseId(found.id);
-        } else {
-          setFolioNotFound(true);
-        }
-      } catch (err) {
-        setActionError(
-          err instanceof Error ? err.message : "No se pudo buscar el folio.",
-        );
-      } finally {
-        setIsSearchingFolio(false);
-      }
-    },
-    [upsertCase],
-  );
 
   const receiveItem = useCallback(
     async (id: string) => {
@@ -186,14 +148,11 @@ export function ReturnCasesProvider({ children }: { children: ReactNode }) {
         cases,
         selectedCaseId,
         isLoadingSamples,
-        isSearchingFolio,
-        folioNotFound,
         actionError,
         pendingActionId,
         hasLoadedSamples,
         selectCase,
         loadSampleCases,
-        searchFolio,
         receiveItem,
         submitInspection,
         dismissError,
