@@ -1,6 +1,8 @@
 import { useAppState } from '../../../lib/app-state';
 import { formatDateTimeEsMx } from '../../../lib/format-date';
 import { sofiaOrder } from '../../../lib/order-fixture';
+import { LiveTrackingTimeline } from './LiveTrackingTimeline';
+import { useLiveReturnTracking } from '../hooks/useLiveReturnTracking';
 
 const STATUS_LABELS: Record<string, string> = {
   Pending: 'Pendiente',
@@ -28,8 +30,10 @@ function StatusPill({ label }: { label: string }) {
 export function ReturnStatusPage() {
   const { caseState, goTo } = useAppState();
   const { returnRequest, qrCode, reservation, selectedStore } = caseState;
+  const { latestUpdate, connectionStatus } = useLiveReturnTracking(returnRequest?.id ?? null);
+  const effectiveRequest = latestUpdate ?? returnRequest;
 
-  if (!returnRequest) {
+  if (!returnRequest || !effectiveRequest) {
     return (
       <div className="palacio-fade-up rounded-sm border border-palacio-gold/20 bg-white p-10 text-center" data-testid="return-status-empty">
         <p className="font-serif text-xl italic text-palacio-ink">Aún no tienes una devolución en curso</p>
@@ -65,10 +69,10 @@ export function ReturnStatusPage() {
             </h1>
           </div>
           <div className="flex flex-wrap gap-2" data-testid="status-pills">
-            <StatusPill label={returnRequest.eligibilityStatus} />
-            <StatusPill label={returnRequest.storeInspectionStatus} />
-            <StatusPill label={returnRequest.fraudReviewStatus} />
-            <StatusPill label={returnRequest.refundStatus} />
+            <StatusPill label={effectiveRequest.eligibilityStatus} />
+            <StatusPill label={effectiveRequest.storeInspectionStatus} />
+            <StatusPill label={effectiveRequest.fraudReviewStatus} />
+            <StatusPill label={effectiveRequest.refundStatus} />
           </div>
         </div>
 
@@ -96,24 +100,11 @@ export function ReturnStatusPage() {
         </dl>
       </div>
 
-      {/*
-        TODO(demo-live-build): se conecta a GET /api/returns/{id} durante la presentación en vivo.
-        Hoy Palacio.Returns.Api no expone ningún endpoint GET (es intencional — ver
-        docs/constitution.md y la propuesta de demo en historia.md §7.2, "momento killer en
-        VS Code"). Esta sección solo refleja el último estado conocido en el navegador, devuelto
-        por el POST /api/returns original de esta sesión. NO se debe llamar a un GET inexistente.
-      */}
-      <div
-        className="rounded-sm border border-dashed border-palacio-gold/40 bg-palacio-cream-dark/40 p-8 text-center"
-        data-testid="live-tracking-coming-soon"
-      >
-        <p className="text-xs uppercase tracking-[0.25em] text-palacio-gold-dark">Próximamente</p>
-        <p className="mt-2 font-serif text-xl italic text-palacio-ink">Seguimiento en tiempo real</p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-palacio-muted">
-          Muy pronto podrás consultar el estatus más reciente de tu devolución directamente desde
-          la tienda — recepción, inspección y reembolso — sin salir de Mi Palacio.
-        </p>
-      </div>
+      <LiveTrackingTimeline
+        request={effectiveRequest}
+        hasQrCode={Boolean(qrCode)}
+        connectionStatus={connectionStatus}
+      />
     </div>
   );
 }
