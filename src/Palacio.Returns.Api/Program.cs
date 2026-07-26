@@ -1,3 +1,4 @@
+using Palacio.Returns.Api.Hubs;
 using Palacio.Returns.Domain.Abstractions;
 using Palacio.Returns.Domain.Services;
 using Palacio.Returns.Infrastructure.Fraud;
@@ -12,15 +13,22 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
 const string DemoWebClients = "DemoWebClients";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(DemoWebClients, policy =>
     {
+        // AllowCredentials es necesario para el hub de SignalR (ReturnStatusHub): el cliente
+        // @microsoft/signalr manda credentials: 'include' por defecto en la petición de
+        // negotiate, y el navegador rechaza esa respuesta si el servidor no lo permite
+        // explícitamente (no se puede combinar con AllowAnyOrigin, por eso WithOrigins es
+        // explícito con la lista de puertos de los frontends de la demo).
         policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -46,6 +54,7 @@ app.UseCors(DemoWebClients);
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ReturnStatusHub>("/hubs/return-status");
 
 app.Run();
 
