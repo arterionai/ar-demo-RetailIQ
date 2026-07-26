@@ -97,12 +97,14 @@ cuando sí tiene permiso de saberlo, lo dice también, y explica por qué antes 
 
 ## Escena 2 — Jorge construye el endpoint en vivo (VS Code + GitHub Copilot)
 
-> ⚠️ **Decisión pendiente, ver §"Pendientes" al final**: el `GET /api/returns/{id}` que esta
-> escena construye en vivo **ya existe hoy en `main`** — se implementó (y se dejó, a propósito)
-> para poder construir la Escena 5 (seguimiento en vivo compartido). Antes de presentar hay que
-> decidir: (a) revertir temporalmente ese commit para que Copilot lo construya de verdad en vivo
-> frente a la audiencia, o (b) aceptar que ya existe y replantear qué construye Copilot en esta
-> escena. Todo lo demás de esta sección sigue siendo válido en cualquiera de los dos casos.
+**Resuelto: se revirtió el GET a propósito, para que esta escena vuelva a ser en vivo de
+verdad.** El `GET /api/returns/{id}` se había implementado para construir la Escena 5, pero ya se
+quitó de `ReturnsController.cs` (y su test) — `main` vuelve a compilar en 9/9 tests, sin el
+endpoint. El hub SignalR y las transmisiones en vivo (`BroadcastStatusAsync`) SÍ se quedaron
+permanentemente, porque no dependen del GET. Consecuencia importante: **hasta que esta escena se
+corra en vivo, "Buscar por folio" en Operations Console y por lo tanto la Escena 5 no van a
+funcionar** — eso es intencional, es lo que hace que el orden Escena 2 → Escena 5 tenga sentido
+dramático (Copilot construye la pieza que el asociado necesita, y de inmediato se usa).
 
 **Quién actúa:** Jorge Ramírez (o el presentador en su nombre), en VS Code con Copilot Agent Mode
 abierto sobre el repo `arterionai/ar-demo-RetailIQ`.
@@ -147,10 +149,13 @@ en el prompt de arriba.
 **Timing:** en el ensayo, lectura de contexto + implementación + verificación fue rápido y sin
 ciclo de debugging — cómodo para el tiempo de una demo en vivo.
 
-**Nota histórica:** este ensayo original se hizo en un worktree aislado y descartado, precisamente
-para no adelantar el endpoint en `main`. Después, para construir la Escena 5 (seguimiento en vivo
-compartido entre Mi Palacio y Operations Console), el endpoint SÍ se implementó de verdad en
-`main` — ver la nota al inicio de esta escena y la decisión pendiente al final del documento.
+**Nota histórica:** este prompt se ensayó dos veces. La primera, en un worktree aislado y
+descartado. La segunda, se implementó de verdad en `main` para poder construir y verificar la
+Escena 5 de punta a punta (con datos reales, no supuestos) — y una vez confirmado que la Escena 5
+funciona, **se revirtió deliberadamente** (se quitó `GetReturnStatus` de `ReturnsController.cs` y
+su test; el hub SignalR y las transmisiones en vivo NO se tocaron, esos se quedan permanentes) para
+que esta escena vuelva a ser una construcción en vivo genuina. `main` está hoy en 9/9 tests, sin
+el endpoint — exactamente como debe estar antes de presentar.
 
 ---
 
@@ -208,9 +213,15 @@ a la audiencia.** Requiere dos pantallas visibles a la vez (proyector dividido, 
 **Frase narrativa:** "Esto no son dos demos por separado. Es el mismo caso real, viajando por el
 mismo sistema — y la clienta lo ve pasar, en vivo, sin refrescar nada."
 
+> ⚠️ **Depende de la Escena 2**: "Buscar por folio" (paso 2 de arriba) solo funciona una vez que
+> el `GET /api/returns/{id}` existe — hoy está deliberadamente revertido (ver Escena 2). Esta
+> escena se verificó de punta a punta ANTES de revertirlo (ver nota de verificación abajo); en la
+> presentación real, correrá igual en cuanto la Escena 2 termine de construirlo en vivo.
+
 **✅ Verificado en vivo, con dos navegadores reales por separado** (contextos de browser
-independientes, simulando dos dispositivos distintos): se creó el caso real de Sofía por
-conversación completa en Mi Palacio, se buscó ese mismo ID en Operations Console, y ambas acciones
+independientes, simulando dos dispositivos distintos), en el momento en que el GET aún existía
+en `main` para poder probarlo: se creó el caso real de Sofía por conversación completa en Mi
+Palacio, se buscó ese mismo ID en Operations Console, y ambas acciones
 (`recibir` y `aprobar inspección`) se reflejaron en la pantalla de Mi Palacio sin recargar, vía el
 hub `ReturnStatusHub` (SignalR). En el camino se encontró y arregló un bug real: el CORS del
 backend no permitía credenciales, y el cliente SignalR las manda por defecto en su negociación —
@@ -236,13 +247,13 @@ negocio — solo relé de un estado ya calculado por `ReturnWorkflowService`.
       siguiente pendiente).
 - [x] Mi Palacio y Operations Console ahora comparten el mismo caso real en vivo — construido y
       verificado (Escena 5): folio search real + hub SignalR + línea de tiempo animada en Mi
-      Palacio. Ver decisión pendiente abajo sobre cómo esto afecta a la Escena 2.
-- [ ] **Decisión pendiente de mayor prioridad**: el `GET /api/returns/{id}` de la Escena 2 ya
-      existe en `main` (se necesitaba para construir la Escena 5). Antes de presentar, decidir:
-      (a) revertir ese endpoint a un branch/commit aparte y dejar que Copilot lo reconstruya en
-      vivo tal como está guionado en la Escena 2, luego volver a aplicarlo para que la Escena 5
-      funcione, o (b) aceptar que ya existe y ajustar el guion de la Escena 2 (¿Copilot construye
-      otra cosa? ¿esta escena se recorta?). Cualquiera de las dos opciones es viable — falta elegir.
+      Palacio.
+- [x] **Resuelto**: el `GET /api/returns/{id}` se revirtió deliberadamente de `main` después de
+      verificar la Escena 5 (9/9 tests, sin el endpoint) — la Escena 2 vuelve a ser una
+      construcción en vivo genuina. El hub SignalR y las transmisiones quedaron permanentes. **El
+      día de la presentación, correr la Escena 2 antes que la Escena 5** — si por cualquier motivo
+      la Escena 2 no se corre (o falla en vivo), la Escena 5 no va a funcionar hasta que el
+      endpoint exista de nuevo.
 - [ ] Decidir explícitamente si la Escena 1 se presenta como "dos actos" (primero sin acceso a la
       carpeta confidencial, luego con acceso) — recomendado, es más fuerte que preguntar una sola
       vez ya con acceso completo desde el principio.
