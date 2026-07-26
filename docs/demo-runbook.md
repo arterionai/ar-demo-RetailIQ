@@ -97,9 +97,15 @@ cuando sí tiene permiso de saberlo, lo dice también, y explica por qué antes 
 
 ## Escena 2 — Jorge construye el endpoint en vivo (VS Code + GitHub Copilot)
 
+> ⚠️ **Decisión pendiente, ver §"Pendientes" al final**: el `GET /api/returns/{id}` que esta
+> escena construye en vivo **ya existe hoy en `main`** — se implementó (y se dejó, a propósito)
+> para poder construir la Escena 5 (seguimiento en vivo compartido). Antes de presentar hay que
+> decidir: (a) revertir temporalmente ese commit para que Copilot lo construya de verdad en vivo
+> frente a la audiencia, o (b) aceptar que ya existe y replantear qué construye Copilot en esta
+> escena. Todo lo demás de esta sección sigue siendo válido en cualquiera de los dos casos.
+
 **Quién actúa:** Jorge Ramírez (o el presentador en su nombre), en VS Code con Copilot Agent Mode
-abierto sobre el repo `arterionai/ar-demo-RetailIQ`, con el endpoint `GET /api/returns/{id}`
-**todavía sin existir en `main`** — eso es lo que se construye en vivo.
+abierto sobre el repo `arterionai/ar-demo-RetailIQ`.
 
 **Qué escribir a Copilot** (✅ ensayado en un worktree aislado, descartado después — build y tests
 en verde a la primera; ver nota de ambigüedad resuelta abajo):
@@ -141,9 +147,10 @@ en el prompt de arriba.
 **Timing:** en el ensayo, lectura de contexto + implementación + verificación fue rápido y sin
 ciclo de debugging — cómodo para el tiempo de una demo en vivo.
 
-**Importante para preservar el momento en vivo:** este ensayo se hizo en un worktree aislado que
-ya se descartó — `main` sigue sin el endpoint. No lo repitas en `main` antes de la presentación
-real, o se pierde el efecto de "construcción en vivo".
+**Nota histórica:** este ensayo original se hizo en un worktree aislado y descartado, precisamente
+para no adelantar el endpoint en `main`. Después, para construir la Escena 5 (seguimiento en vivo
+compartido entre Mi Palacio y Operations Console), el endpoint SÍ se implementó de verdad en
+`main` — ver la nota al inicio de esta escena y la decisión pendiente al final del documento.
 
 ---
 
@@ -157,10 +164,11 @@ real, o se pierde el efecto de "construcción en vivo".
 3. Escribir: *"la talla no me quedó y necesito una talla diferente para la gala que tengo el sábado"*.
 4. El Concierge dirá en qué tiendas está disponible (Polanco y Santa Fe) — elegir una, ej. *"sí, vamos con Santa Fe por favor"*.
 5. Se reserva de verdad, se abre el caso real, se genera el QR real.
-6. **Si ya se construyó el endpoint de la Escena 2**: pedir el estatus en el mismo chat o abrir la pantalla de estatus — debería mostrar datos reales en vez del mensaje "Próximamente".
+6. Clic en **"Ver estatus de mi devolución"** — se abre el **Seguimiento en vivo** (línea de tiempo
+   animada, ver Escena 5). Déjala abierta: es la pantalla que va a reaccionar sola en la Escena 5.
 
-**✅ Verificado en vivo** (pasos 1-5, con navegador real, contra los 3 procesos reales corriendo:
-API .NET + proxy Azure OpenAI + Vite). El paso 6 depende de que la Escena 2 ya se haya corrido.
+**✅ Verificado en vivo** (los 6 pasos, con navegador real, contra los 4 procesos reales corriendo:
+API .NET + proxy Azure OpenAI + hub SignalR + Vite).
 
 ---
 
@@ -168,13 +176,50 @@ API .NET + proxy Azure OpenAI + Vite). El paso 6 depende de que la Escena 2 ya s
 
 **Quién actúa:** el presentador, como asociado de tienda, en `http://localhost:5174`.
 
-**Qué hacer:**
-1. Clic en **"Cargar casos de ejemplo"** (o localizar el caso real de Sofía si la Escena 3 ya corrió en la misma sesión de navegador — hoy son procesos independientes, cada uno con su propio estado).
+**Qué hacer (si se presenta de forma aislada, sin encadenar con la Escena 3):**
+1. Clic en **"Cargar casos de ejemplo"**.
 2. Seleccionar el caso, clic en **"Recibir artículo"**, luego **"Aprobar inspección"**.
 3. Cambiar a la Vista de Gerente: mostrar Store Readiness, Command Center, Decision Room (datos de muestra, no requieren backend).
 
 **✅ Vista de Asociado verificada** con llamadas reales contra la API. Vista de Gerente usa datos
 estáticos de `historia.md` §6.2 — no requiere verificación adicional, no depende de ningún backend.
+
+Si en cambio se encadena con la Escena 3 (recomendado — es el momento fuerte), salta a la Escena 5.
+
+---
+
+## Escena 5 — El momento apantallador: la clienta ve el cambio en vivo
+
+**Esta es la escena que conecta Mi Palacio y Operations Console de verdad, en tiempo real, frente
+a la audiencia.** Requiere dos pantallas visibles a la vez (proyector dividido, o dos laptops).
+
+**Qué hacer:**
+1. Con la pantalla de **Seguimiento en vivo** de Sofía (Escena 3, paso 6) todavía abierta y
+   visible, cambia a Operations Console.
+2. En **"Buscar por folio / ID de caso"**, pega el ID real de la devolución de Sofía (el
+   presentador lo copia de la pantalla de Mi Palacio — visible como "SOLICITUD XXXXXXXX", aunque
+   para pegarlo completo conviene tenerlo copiado de antemano en el portapapeles, ya que la UI solo
+   muestra los primeros 8 caracteres).
+3. Clic en **"Recibir artículo"**. → En la pantalla de Sofía, sin tocar nada ni recargar, el paso
+   3 de la línea de tiempo se ilumina: **"✓ Artículo recibido en tienda"**.
+4. Clic en **"Aprobar inspección"**. → En la pantalla de Sofía, de nuevo en vivo, el paso final se
+   ilumina: **"✓ ¡Tu cambio fue confirmado!"**.
+
+**Frase narrativa:** "Esto no son dos demos por separado. Es el mismo caso real, viajando por el
+mismo sistema — y la clienta lo ve pasar, en vivo, sin refrescar nada."
+
+**✅ Verificado en vivo, con dos navegadores reales por separado** (contextos de browser
+independientes, simulando dos dispositivos distintos): se creó el caso real de Sofía por
+conversación completa en Mi Palacio, se buscó ese mismo ID en Operations Console, y ambas acciones
+(`recibir` y `aprobar inspección`) se reflejaron en la pantalla de Mi Palacio sin recargar, vía el
+hub `ReturnStatusHub` (SignalR). En el camino se encontró y arregló un bug real: el CORS del
+backend no permitía credenciales, y el cliente SignalR las manda por defecto en su negociación —
+sin esto, la conexión fallaba silenciosamente y la línea de tiempo se quedaba en "Sin conexión".
+
+**Arquitectura (para preguntas técnicas de la audiencia):** `Palacio.Returns.Api` expone un hub
+SignalR (`/hubs/return-status`) que agrupa conexiones por ID de devolución. Cada acción real
+(recibir, inspección, etc.) transmite el DTO actualizado a ese grupo. El hub no contiene lógica de
+negocio — solo relé de un estado ya calculado por `ReturnWorkflowService`.
 
 ---
 
@@ -187,9 +232,19 @@ estáticos de `historia.md` §6.2 — no requiere verificación adicional, no de
       ya sale completa con fecha, razones y el matiz gobernanza-vs-enforcement-en-código. **La
       Escena 1 completa está verificada en vivo.**
 - [x] Redactar y ensayar el prompt exacto de la Escena 2 (Copilot/VS Code) — hecho, en worktree
-      aislado y descartado; build+test en verde, `main` sigue sin el endpoint para el momento en vivo.
-- [ ] Decidir si Mi Palacio y Operations Console comparten el mismo caso en vivo (hoy son procesos
-      independientes con estado separado) o si se acepta mostrar casos distintos en cada uno.
+      aislado y descartado inicialmente; **luego se implementó de verdad en `main`** (ver
+      siguiente pendiente).
+- [x] Mi Palacio y Operations Console ahora comparten el mismo caso real en vivo — construido y
+      verificado (Escena 5): folio search real + hub SignalR + línea de tiempo animada en Mi
+      Palacio. Ver decisión pendiente abajo sobre cómo esto afecta a la Escena 2.
+- [ ] **Decisión pendiente de mayor prioridad**: el `GET /api/returns/{id}` de la Escena 2 ya
+      existe en `main` (se necesitaba para construir la Escena 5). Antes de presentar, decidir:
+      (a) revertir ese endpoint a un branch/commit aparte y dejar que Copilot lo reconstruya en
+      vivo tal como está guionado en la Escena 2, luego volver a aplicarlo para que la Escena 5
+      funcione, o (b) aceptar que ya existe y ajustar el guion de la Escena 2 (¿Copilot construye
+      otra cosa? ¿esta escena se recorta?). Cualquiera de las dos opciones es viable — falta elegir.
 - [ ] Decidir explícitamente si la Escena 1 se presenta como "dos actos" (primero sin acceso a la
       carpeta confidencial, luego con acceso) — recomendado, es más fuerte que preguntar una sola
       vez ya con acceso completo desde el principio.
+- [ ] Ensayar el timing conjunto de las 5 escenas en una sola toma continua (nunca se ha corrido
+      el demo completo de principio a fin sin cortes).
