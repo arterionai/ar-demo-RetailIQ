@@ -2,9 +2,9 @@ name: dotnet-ci
 
 on:
   push:
-    branches: [main, '**']
+    branches: ['main', 'copilot/**']
   pull_request:
-    branches: [main, '**']
+    branches: ['main', 'copilot/**']
 
 jobs:
   build-and-test:
