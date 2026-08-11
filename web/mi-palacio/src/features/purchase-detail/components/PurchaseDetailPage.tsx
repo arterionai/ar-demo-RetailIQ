@@ -99,8 +99,8 @@ export function PurchaseDetailPage() {
 
           <div className="rounded-sm border border-palacio-gold/20 bg-palacio-cream-dark/50 p-4">
             <p className="text-sm text-palacio-ink">
-              La talla no te quedó como esperabas y tienes un evento próximo. Nuestro Concierge
-              Postcompra puede ayudarte a resolverlo con certeza, de principio a fin.
+              La talla no te quedó como esperabas. Nuestro Concierge Postcompra puede ayudarte a
+              resolverlo con certeza, de principio a fin.
             </p>
           </div>
 
