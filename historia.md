@@ -14,16 +14,17 @@ La pregunta que guía la demostración es:
 
 > **¿Qué pasaría si Palacio de Hierro tuviera memoria y pudiera convertirla en acción?**
 
-La historia conecta cuatro superficies:
+La historia conecta cinco superficies:
 
-1. **App o web de Palacio:** comprende la intención del cliente y resuelve su necesidad con certeza y personalización.
+1. **Web de Palacio:** comprende la intención del cliente y resuelve su necesidad con certeza y personalización.
 2. **Microsoft Teams:** conecta personas, conversaciones, decisiones, archivos, reuniones y sistemas empresariales.
 3. **GitHub y GitHub Copilot:** convierte el contexto del negocio en software, pruebas y pull requests verificables.
-4. **Palacio Operations Console:** convierte señales operativas en seguimiento, aprobación y decisiones de rollout.
+4. **Azure Application Insights:** muestra lo que el sistema está haciendo de verdad en producción, más allá de lo que la aplicación reporta como error.
+5. **Palacio Operations Console:** convierte señales operativas en seguimiento, aprobación y decisiones de rollout.
 
-Work IQ funciona como la capa de inteligencia transversal que relaciona el conocimiento de Microsoft 365 con las personas, las decisiones y el trabajo. GitHub Copilot actúa como el ejecutor que transforma ese contexto en cambios de software alineados con el negocio.
+Work IQ funciona como la capa de inteligencia transversal que relaciona el conocimiento de Microsoft 365 con las personas, las decisiones y el trabajo. GitHub Copilot actúa como el ejecutor que transforma ese contexto en cambios de software alineados con el negocio — y, con la telemetría a la mano, también como el que se da cuenta de que un control dejó de cumplirse.
 
-> **Work IQ es la memoria organizacional. GitHub Copilot es el ejecutor. Uno entiende; el otro construye.**
+> **Work IQ es la memoria organizacional. GitHub Copilot es el ejecutor. Uno entiende; el otro construye. Y juntos vigilan que lo construido siga honrando lo que se decidió.**
 
 ---
 
@@ -33,8 +34,8 @@ La experiencia se diseña alrededor del canal natural de cada persona:
 
 | Audiencia | Superficie principal | Necesidad | Experiencia de IA |
 |---|---|---|---|
-| Cliente | App o web de Palacio | Resolver una compra, cambio o devolución | Concierge Postcompra |
-| Asociado de tienda | Web operativa o app de tienda | Ejecutar el proceso con claridad | Store Associate Copilot |
+| Cliente | Web de Palacio | Resolver una compra, cambio o devolución | Concierge Postcompra |
+| Asociado de tienda | Web operativa de tienda | Ejecutar el proceso con claridad | Store Associate Copilot |
 | Gerente de tienda | Teams + Operations Console | Coordinar capacidad y preparación | Store Operations Agent |
 | Product Manager | Teams + Copilot | Reconstruir contexto y definir producto | Product Intelligence Agent |
 | Arquitectura | Teams + GitHub/VS Code | Proteger decisiones y estándares | Architecture Agent |
@@ -44,7 +45,7 @@ La experiencia se diseña alrededor del canal natural de cada persona:
 
 La experiencia completa sigue este principio:
 
-> **El cliente inicia en la app o web de Palacio. Los colaboradores coordinan y deciden en Teams. Los equipos de tienda ejecutan desde una experiencia operativa. GitHub Copilot transforma las decisiones en software.**
+> **El cliente inicia en la web de Palacio. Los colaboradores coordinan y deciden en Teams. Los equipos de tienda ejecutan desde una experiencia operativa. GitHub Copilot transforma las decisiones en software.**
 
 ```mermaid
 flowchart LR
@@ -63,7 +64,7 @@ flowchart LR
 
 ## 3. Historia central: el vestido antes de la gala
 
-La clienta ficticia **Sofía de la Garza** compra en línea un vestido para una gala. Al recibirlo, descubre que la talla no es correcta. La gala es el sábado y necesita resolverlo rápidamente.
+La clienta ficticia **Sofía de la Garza** compra en línea un vestido para una gala. Al recibirlo, descubre que la talla no le queda bien. La gala es el sábado y necesita resolverlo rápidamente.
 
 Sofía quiere saber:
 
@@ -280,7 +281,7 @@ El agente entrega problemas frecuentes, volumen, impacto, testimonios, hipótesi
 
 Teams sirve para conversar, coordinar y decidir. Las tareas visuales, estructuradas y transaccionales viven en dos experiencias web.
 
-### 6.1 App o web del cliente: Mi Palacio
+### 6.1 Web del cliente: Mi Palacio
 
 Funciones:
 
@@ -513,6 +514,14 @@ Work IQ conecta:
 - qué personas deben participar;
 - qué compromisos están pendientes.
 
+A esa memoria organizacional se suma una segunda fuente de verdad, de naturaleza distinta: la
+**telemetría de producción** (Azure Application Insights). Mientras Work IQ responde *qué
+decidimos y por qué*, la telemetría responde *qué está pasando en realidad*. Ninguna de las dos
+basta sola, y el valor aparece cuando se cruzan: un control documentado en un postmortem se puede
+verificar contra el comportamiento real del sistema, y una anomalía en la telemetría se puede
+interpretar a la luz de la decisión que le dio origen. Ese cruce es lo que permite encontrar un
+control roto **antes** de que cueste dinero, en vez de reconstruirlo después del incidente.
+
 ```mermaid
 flowchart TB
     subgraph Channels["Canales de experiencia"]
@@ -532,11 +541,13 @@ flowchart TB
         M365["Microsoft 365\nCorreos, chats, archivos y reuniones"]
         GH["GitHub\nRepos, issues, PRs y ADRs"]
         BIZ["Sistemas de negocio\nERP, POS, inventario y fraude"]
+        AI["Application Insights\nTelemetría de producción"]
     end
 
     M365 --> WIQ
     GH --> COPILOT
     BIZ --> AGENT
+    AI --> COPILOT
     WIQ --> AGENT
     WIQ --> COPILOT
     AGENT --> APP
@@ -545,6 +556,10 @@ flowchart TB
     COPILOT --> IDE
     TEAMS --> COPILOT
 ```
+
+La flecha de **Application Insights hacia Copilot** es la que cierra el ciclo: el software que se
+construye emite señales, y esas señales vuelven a la misma herramienta que lo construyó. Copilot
+no solo escribe el sistema — también lo vigila, y lo hace sabiendo por qué cada control existe.
 
 ### 8.5 Flujo de negocio objetivo
 
@@ -644,20 +659,25 @@ Aprendizajes:
 
 ### 9.5 Repositorio de demostración
 
-Nombre propuesto: `palacio-returns-demo`.
+Nombre propuesto: `palacio-returns-demo` (construido como `ar-demo-RetailIQ`).
 
 ```text
 /src
-  /Palacio.Returns.Api
+  /Palacio.Returns.Api            (+ /Observability — instrumentación de Application Insights)
   /Palacio.Returns.Domain
   /Palacio.Returns.Infrastructure
   /Palacio.Returns.Tests
 /web
-  /returns-mobile-web
+  /mi-palacio                     (cliente: Concierge, QR, seguimiento en vivo)
+  /operations-console             (asociado y gerente)
+  /returns-mobile-web             (placeholder diferido)
+/scripts
+  seed-telemetry.ps1              (siembra tráfico para poblar la telemetría)
+  aiq.ps1                         (consultas KQL contra Application Insights)
 /docs
   /adr
   /architecture
-  /runbooks
+  /runbooks                       (incidente de noviembre + consultas de telemetría)
 /.github
   copilot-instructions.md
 ```
@@ -669,76 +689,108 @@ Tecnología sugerida:
 - SQLite o datos simulados;
 - xUnit;
 - GitHub Actions;
+- Azure Application Insights vía Azure Monitor OpenTelemetry;
 - despliegue web opcional en Azure.
 
-El repositorio debe tener historia: issues, pull requests, comentarios, ADRs, pruebas y un bug deliberado relacionado con el incidente.
+El repositorio debe tener historia: issues, pull requests, comentarios, ADRs, pruebas y **bugs
+deliberados relacionados con el incidente**.
+
+Sobre los bugs deliberados: no basta con que existan, tienen que ser *del tipo correcto*. Un bug
+que rompe la aplicación de forma visible no demuestra nada — lo encontraría cualquiera. Los que
+sirven a esta narrativa son los que **la aplicación no reporta como error**: el flujo termina bien,
+el cliente queda satisfecho, las pruebas pasan y el code review los aprueba, porque el código se
+lee como una decisión razonable. Solo la telemetría revela que un control dejó de cumplirse. Ver
+`docs/demo-runbook.md`, Escena 5, para los dos que están plantados hoy y por qué sobreviven una
+revisión.
 
 ---
 
 ## 10. Diseño del demo recomendado
 
-La recomendación es una historia lineal de aproximadamente 10 minutos. Se muestran cuatro superficies, no todos los sistemas disponibles.
+> **Nota (2026-07-29)**: el demo construido divergió de esta propuesta original en dos cosas, y el
+> orden de abajo ya refleja lo construido. Primero, **Work IQ abre la demo** en vez de la app: el
+> contexto que reconstruye es lo que da sentido a todo lo demás, y abrir con la app dejaba la
+> escena de Teams como un anexo. Segundo, se agregó una **sexta escena de observabilidad**, que no
+> estaba en la propuesta y terminó siendo la que cierra el argumento — ver más abajo. La duración
+> pasó de ~10 a ~14 minutos.
+>
+> El guion palabra por palabra vive en `docs/demo-script.md` (con su minute-by-minute) y la
+> referencia técnica de qué está verificado en `docs/demo-runbook.md`. **Esos dos son la fuente de
+> verdad operativa**; esta sección conserva el *porqué* narrativo de cada escena.
+
+La historia es lineal, de aproximadamente 14 minutos. Se muestran cinco superficies —Teams,
+VS Code, Mi Palacio, Operations Console y Application Insights—, no todos los sistemas
+disponibles.
 
 | Tiempo | Escena | Superficie | Mensaje |
 |---|---|---|---|
-| 0:00–1:30 | El vestido antes de la gala | App o web Palacio | Palacio entiende la intención real del cliente |
-| 1:30–4:00 | María reconstruye el contexto | Teams + Agente Palacio | Work IQ conecta memoria, decisiones, incidentes y personas |
-| 4:00–5:00 | La contradicción y el incidente | Teams | La IA distingue qué decisión está vigente y por qué cambió |
-| 5:00–7:30 | La conversación se convierte en trabajo | Teams + GitHub Copilot | El contexto se transforma en una sesión de ingeniería |
-| 7:30–9:00 | Cambio verificable | GitHub / VS Code | Copilot implementa, prueba y redacta el pull request |
-| 9:00–10:00 | Resultados y decisión | Operations Console | La operación entiende el piloto y decide el rollout |
+| 0:30–3:30 | María reconstruye el contexto | Teams + Work IQ | Work IQ conecta memoria, decisiones, incidentes y personas — y respeta los permisos |
+| 3:30–5:30 | La conversación se convierte en software | VS Code + GitHub Copilot | El contexto de negocio se transforma en código probado, en minutos |
+| 5:30–8:00 | El vestido antes de la gala | Mi Palacio | Palacio entiende la intención real del cliente |
+| 8:00–9:30 | El mismo caso, en dos pantallas | Mi Palacio + Operations Console | Cliente y operación viven el mismo hecho, en tiempo real |
+| 9:30–12:45 | El control que se rompió en silencio | Application Insights + VS Code | La telemetría revela lo que ninguna prueba detectó; Copilot lo diagnostica y lo corrige |
+| 12:45–13:45 | Resultados y decisión | Operations Console | La operación decide el rollout con el control ya protegido |
 
-### Escena 1 — App Palacio
+### Escena 1 — Teams y memoria organizacional
 
-Sofía explica que el vestido no le quedó y que tiene una gala. El Concierge Postcompra valida la política, encuentra otra talla, la reserva en Polanco y genera un QR con instrucciones.
+María, recién llegada como Product Manager, pregunta por el proceso de devolución omnicanal: política vigente, excepciones, decisiones de arquitectura, riesgos conocidos y personas que deberían participar. Work IQ responde con síntesis y evidencia.
 
-**Frase narrativa:**
+Después viene la pregunta decisiva sobre la contradicción de SAP —cuál es la decisión vigente, cuándo cambió y por qué— y finalmente la del incidente: qué aprendimos y qué controles debemos conservar.
 
-> Palacio no escuchó “quiero devolver un vestido”. Entendió “necesito llegar a mi gala con el vestido correcto”.
-
-### Escena 2 — Teams y memoria organizacional
-
-María pregunta:
-
-> Resume cómo funciona actualmente el proceso de devolución omnicanal. Identifica la política vigente, las excepciones, las decisiones de arquitectura, los riesgos conocidos y las personas que deberían participar.
-
-El Agente Palacio responde con síntesis y evidencia.
-
-Después se formula la pregunta decisiva:
-
-> Encontré información contradictoria sobre si la app puede conectarse directamente a SAP. ¿Cuál es la decisión vigente, cuándo cambió y por qué?
+El momento más fuerte de la escena no estaba guionado: al preguntar sin permisos, Work IQ **dice que no encuentra el postmortem**, en vez de inventarlo. Con permisos, lo encuentra y explica por sí mismo por qué antes no aparecía.
 
 **Frase narrativa:**
 
-> No estamos usando IA para inventar respuestas. Estamos usando IA para conectar la memoria de Palacio.
+> No estamos usando IA para inventar respuestas. Estamos usando IA para conectar la memoria de Palacio — y cuando no sabe algo con certeza, lo dice.
 
-### Escena 3 — Memoria del incidente
+### Escena 2 — VS Code + GitHub Copilot
 
-María pregunta:
-
-> ¿Ha ocurrido anteriormente algún incidente relacionado con aprobar un reembolso demasiado pronto? ¿Qué aprendimos y qué controles debemos conservar?
-
-El agente recupera el postmortem, la reunión, el ADR y el historial técnico. Identifica las personas que participaron y los controles que deben permanecer.
-
-### Escena 4 — Teams + GitHub Copilot
-
-Jorge delega el cambio desde el hilo o continúa en VS Code. GitHub Copilot analiza el contexto, el repositorio y las instrucciones; modifica el dominio, agrega pruebas de regresión y prepara un pull request.
+Jorge toma ese contexto y lo pasa a Copilot, que implementa el endpoint faltante respetando ADR-014 y las convenciones de capas del proyecto, agrega pruebas y redacta el pull request.
 
 **Frase narrativa:**
 
 > La conversación no terminó en una minuta. Se convirtió en un cambio de software verificable.
 
-### Escena 5 — Operations Console
+### Escena 3 — Mi Palacio
 
-El gerente observa el piloto Polanco, pregunta por qué una tienda está en amarillo y revisa la recomendación para ampliar el rollout.
+Sofía explica que el vestido no le quedó y que tiene una gala. El Concierge Postcompra valida la política, encuentra otra talla, le dice en qué tiendas está disponible, la reserva y genera un QR con instrucciones.
 
-La Decision Room muestra evidencia, métricas, riesgos, responsables y próximos pasos.
+**Frase narrativa:**
+
+> Palacio no escuchó “quiero devolver un vestido”. Entendió “necesito llegar a mi gala con el vestido correcto”.
+
+### Escena 4 — El mismo caso, en dos pantallas
+
+El asociado de tienda busca el folio real de Sofía, recibe el artículo y aprueba la inspección. En la pantalla de Sofía, sin recargar nada, la línea de tiempo avanza sola.
+
+**Frase narrativa:**
+
+> Esto no son dos demos corriendo en paralelo. Es el mismo caso real, viajando por el mismo sistema — y la clienta lo ve pasar, en vivo.
+
+### Escena 5 — El control que se rompió en silencio
+
+La operación se ve impecable: cero peticiones fallidas, todos los reembolsos procesados. Pero la telemetría de Application Insights muestra otra cosa — un porcentaje alto de las consultas al motor antifraude **nunca termina**, y esas devoluciones se aprueban igual. El patrón es perverso: entre más caro el artículo, más tarda el motor y más probable es que se salte el control. El control que existe para proteger las devoluciones de alto valor es justo el que más se incumple.
+
+Copilot recibe el hallazgo sin decirle dónde está el bug. Consulta la telemetría, encuentra la causa raíz, la conecta con ADR-014 y con el incidente de noviembre, escribe primero las pruebas que fallan, corrige y prepara el PR.
+
+Esta escena es la que cierra el argumento de toda la demo, porque **es la misma falla de noviembre con otro disfraz**: entonces “recibido” se trató como “aprobado”; ahora “no contestó” se está tratando como “está limpio”. La diferencia es cuándo se encontró — antes, semanas después y con el dinero ya devuelto; hoy, antes de decidir el rollout.
+
+**Frase narrativa:**
+
+> Ninguna prueba lo había detectado. Ningún code review lo había visto. Y la aplicación nunca se quejó, porque desde su punto de vista todo salió bien. Lo encontró la telemetría — leída por alguien que además sabía por qué ese control existía.
+
+### Escena 6 — Operations Console
+
+El gerente observa el piloto, pregunta por qué una tienda está en amarillo y revisa la recomendación para ampliar el rollout. La Decision Room muestra evidencia, métricas, riesgos, responsables y próximos pasos.
+
+Va deliberadamente **después** de la Escena 5: decidir el rollout justo después de haber encontrado y arreglado un control roto es lo que le da peso a la decisión. En el orden inverso, es solo un dashboard.
 
 ### Cierre
 
 > **En la app, Palacio entiende al cliente.**  
 > **En Teams, Palacio conecta a su gente.**  
 > **En GitHub, Palacio convierte conocimiento en software.**  
+> **En la telemetría, Palacio se da cuenta de lo que nadie vio.**  
 > **En la consola, Palacio convierte señales en decisiones.**
 >
 > **Work IQ es la inteligencia que mantiene todo conectado.**
@@ -847,6 +899,7 @@ La demostración funciona si la audiencia puede observar que:
 7. La colaboración genera código, pruebas, documentación y revisores.
 8. La operación retroalimenta a producto e ingeniería.
 9. Los ejecutivos pueden decidir con evidencia, métricas y riesgos visibles.
+10. La telemetría de producción revela un control incumplido que ninguna prueba ni revisión detectó — y ese hallazgo se convierte en un fix probado durante la misma sesión.
 
 ---
 
@@ -855,6 +908,8 @@ La demostración funciona si la audiencia puede observar que:
 Palacio de Hierro tiene dos activos enormes: **el talento y el conocimiento**.
 
 El talento ya existe. El conocimiento también. Lo que falta es que ambos puedan encontrarse en el momento exacto en que el cliente, el colaborador o el negocio necesita actuar.
+
+Y hay un tercer momento, menos obvio que los otros dos: cuando **nadie está preguntando nada**. El conocimiento de Palacio no solo sirve para construir más rápido — sirve para notar que algo dejó de funcionar como se decidió que funcionara, mientras todos los tableros siguen en verde.
 
 > **No estamos acelerando únicamente a los desarrolladores. Estamos acelerando la inteligencia colectiva de Palacio de Hierro.**
 
