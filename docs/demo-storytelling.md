@@ -217,7 +217,7 @@ El Copilot cloud agent **no** es el Agent Mode que uso en el editor: corre en un
 - El número del issue que abrió el SRE Agent.
 - Las pestañas del issue **#9** y del PR **#10** del cloud agent, ya cargadas.
 - **El documento *Arquitectura objetivo — Devolución omnicanal* abierto en SharePoint**, listo para seleccionar y copiar justo antes de la Escena 2 (no antes: pisaría el folio de Sofía en el portapapeles).
-- El portapapeles vacío: el folio de Sofía se copia en vivo, en la Escena 3.
+- El portapapeles vacío: el folio de Sofía se copia en vivo con el botón **"Copiar folio"** de Mi Palacio, entre la Escena 3 y la 4. **Nunca a mano**: en pantalla el folio va abreviado a 8 caracteres y la API exige el Guid completo, y un doble clic sobre un Guid selecciona solo el primer segmento. Pasó en el ensayo del 11 de agosto de 2026.
 
 ---
 
@@ -474,7 +474,7 @@ Sofía llegó a la tienda. El asociado tiene la prenda enfrente. Lo que va a hac
 
 > *"Ahora cambiamos a la otra pantalla — el asociado de Palacio Santa Fe, con el vestido de Sofía en sus manos."*
 
-**2. Pego el folio real de Sofía** en "Buscar por folio / ID de caso" y hago clic en **Buscar**. Aquí cobro la promesa que dejé en la Escena 2 — no me la salto, es el arco completo:
+**2. Pego el folio real de Sofía** en "Buscar por folio / ID de caso" y hago clic en **Buscar**. El folio lo copié con el botón **"Copiar folio"** de Mi Palacio, nunca a mano. Aquí cobro la promesa que dejé en la Escena 2 — no me la salto, es el arco completo:
 
 > *"Esta es la misma caja que hace cinco minutos no encontraba nada. Ahora tiene detrás el endpoint que Copilot construyó frente a ustedes. Y esto que trajo es el caso real de Sofía — el mismo que acabamos de crear, no uno de ejemplo."*
 

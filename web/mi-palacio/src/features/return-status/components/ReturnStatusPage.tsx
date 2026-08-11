@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAppState } from '../../../lib/app-state';
 import { formatDateTimeEsMx } from '../../../lib/format-date';
 import { sofiaOrder } from '../../../lib/order-fixture';
@@ -24,6 +25,49 @@ function StatusPill({ label }: { label: string }) {
     <span className="rounded-full border border-palacio-gold/40 bg-palacio-cream-dark px-3 py-1 text-xs font-medium text-palacio-ink">
       {STATUS_LABELS[label] ?? label}
     </span>
+  );
+}
+
+/**
+ * Copia el folio COMPLETO al portapapeles, aunque en pantalla se muestre abreviado.
+ *
+ * El folio es el Guid del caso, y la API lo exige completo (`{id:guid}` en la ruta): con un
+ * fragmento la ruta no coincide y responde 404. En pantalla se muestran solo los primeros 8
+ * caracteres porque un Guid de 36 caracteres no es algo que se le enseñe a una clienta — así que sin
+ * este botón la única forma de obtener el folio real es seleccionarlo a mano, y un doble clic sobre
+ * un Guid selecciona nada más el primer segmento.
+ */
+function CopyFolioButton({ folio }: { folio: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(folio);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // navigator.clipboard requiere contexto seguro; en localhost lo hay, pero si el navegador lo
+      // bloquea igual, se cae a seleccionar el texto para que se pueda copiar con Ctrl+C.
+      const node = document.querySelector('[data-testid="folio-completo"]');
+      if (node) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        window.getSelection()?.removeAllRanges();
+        window.getSelection()?.addRange(range);
+      }
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      data-testid="copiar-folio-button"
+      aria-label={`Copiar folio completo ${folio}`}
+      className="rounded-full border border-palacio-gold/40 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-palacio-gold-dark transition hover:bg-palacio-cream-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-palacio-gold"
+    >
+      {copied ? 'Copiado' : 'Copiar folio'}
+    </button>
   );
 }
 
@@ -61,8 +105,12 @@ export function ReturnStatusPage() {
       <div className="rounded-sm border border-palacio-gold/20 bg-white p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-palacio-gold-dark">
-              Solicitud {returnRequest.id.slice(0, 8)}
+            <p className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-palacio-gold-dark">
+              <span>Solicitud {returnRequest.id.slice(0, 8)}</span>
+              <CopyFolioButton folio={returnRequest.id} />
+              <span data-testid="folio-completo" className="sr-only">
+                {returnRequest.id}
+              </span>
             </p>
             <h1 className="mt-1 font-serif text-2xl italic text-palacio-ink">
               {sofiaOrder.productName}

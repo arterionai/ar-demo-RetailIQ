@@ -68,7 +68,8 @@ agent). Nunca recortes la Escena 4, ni el reporte del SRE Agent.
       seleccionar y copiar. **No es el `ADR-014-returns-orchestration.md` del repo** — ese Copilot
       ya lo tiene en el workspace. Si quieres respaldo local por si SharePoint no carga, guárdalo
       **fuera** del repositorio: dentro, Copilot lo lee solo y pegarlo deja de significar algo.
-- [ ] Copiado al portapapeles: nada todavía — el folio de Sofía se copia en vivo, en la Escena 3.
+- [ ] Copiado al portapapeles: nada todavía — el folio de Sofía se copia en vivo con el botón
+      **"Copiar folio"** de Mi Palacio, entre la Escena 3 y la 4. Nunca a mano.
       (El documento de la Escena 2 se copia justo antes de esa escena, para no pisar el folio.)
 
 **Específico de la Escena 5 (Application Insights) — hazlo en este orden:**
@@ -415,9 +416,16 @@ vivo.)*
 **HACER:** cambiar/mostrar Operations Console (`localhost:5174`), asegurándose de que la pantalla
 de Mi Palacio (Escena 3) siga visible al mismo tiempo (dos monitores, o pantalla dividida).
 
-**HACER:** pegar el folio real de Sofía en **"Buscar por folio / ID de caso"** (cópialo con
-anticipación — se ve en Mi Palacio como "SOLICITUD XXXXXXXX", pero necesitas el ID completo;
-tenlo ya en el portapapeles antes de llegar a esta escena). Clic en **Buscar**.
+**HACER:** pegar el folio real de Sofía en **"Buscar por folio / ID de caso"** y clic en **Buscar**.
+
+> **Para copiar el folio usa el botón "Copiar folio"** que está junto a "Solicitud ########" en Mi
+> Palacio. En pantalla el folio se muestra abreviado a 8 caracteres —un Guid de 36 no es algo que se
+> le enseñe a una clienta— pero el botón copia el **completo**, que es lo que la API exige.
+>
+> ⚠️ **Nunca lo selecciones a mano, y menos con doble clic.** Un doble clic sobre un Guid selecciona
+> solo el primer segmento, y con un folio parcial la ruta `{id:guid}` no coincide: la búsqueda
+> responde 404 y en pantalla sale "No se encontró ese folio" — en el peor momento posible. Esto pasó
+> de verdad en el ensayo del 11 de agosto de 2026.
 
 **DECIR (cobra la promesa de la Escena 2 — no te la saltes, es el arco completo):**
 
