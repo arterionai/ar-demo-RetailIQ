@@ -1,4 +1,5 @@
 using Palacio.Returns.Api.Hubs;
+using Palacio.Returns.Api.Observability;
 using Palacio.Returns.Domain.Abstractions;
 using Palacio.Returns.Domain.Services;
 using Palacio.Returns.Infrastructure.Fraud;
@@ -6,6 +7,10 @@ using Palacio.Returns.Infrastructure.Repositories;
 using Palacio.Returns.Infrastructure.Sap;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Telemetría a Azure Application Insights. Opcional: si no hay connection string configurado,
+// la API arranca igual y sin telemetría (ver PalacioTelemetry).
+builder.AddPalacioTelemetry();
 
 // Add services to the container.
 
@@ -39,6 +44,10 @@ builder.Services.AddScoped<QrCodeService>();
 builder.Services.AddScoped<ReturnWorkflowService>();
 
 var app = builder.Build();
+
+app.Logger.LogInformation(
+    "Telemetría de Application Insights: {Estado}",
+    PalacioTelemetry.IsEnabled ? "ACTIVA" : "desactivada (sin connection string configurado)");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Palacio.Returns.Api.DTOs;
@@ -35,6 +36,7 @@ public class ReturnsController : ControllerBase
             DateTime.UtcNow);
 
         var response = ToResponseDto(request);
+        TagOutcome(response);
         await BroadcastStatusAsync(response);
         return CreatedAtAction(nameof(InitiateReturn), new { id = response.Id }, response);
     }
@@ -44,6 +46,7 @@ public class ReturnsController : ControllerBase
     {
         var request = await _workflowService.ReceiveItemAsync(id);
         var response = ToResponseDto(request);
+        TagOutcome(response);
         await BroadcastStatusAsync(response);
         return Ok(response);
     }
@@ -56,6 +59,7 @@ public class ReturnsController : ControllerBase
             : await _workflowService.RejectInspectionAsync(id);
 
         var response = ToResponseDto(request);
+        TagOutcome(response);
         await BroadcastStatusAsync(response);
         return Ok(response);
     }
@@ -64,8 +68,30 @@ public class ReturnsController : ControllerBase
     public async Task<ActionResult<QrCodeResponseDto>> IssueQrCode(Guid id)
     {
         var request = await _workflowService.IssueReturnQrCodeAsync(id, DateTime.UtcNow);
-        await BroadcastStatusAsync(ToResponseDto(request));
+        var response = ToResponseDto(request);
+        TagOutcome(response);
+        await BroadcastStatusAsync(response);
         return Ok(new QrCodeResponseDto(request.QrToken!, request.QrExpiresAtUtc!.Value));
+    }
+
+    /// <summary>
+    /// Registra en la telemetría el estado con el que quedó la devolución después de la
+    /// operación. Puramente observacional — no decide ni valida nada.
+    /// </summary>
+    private static void TagOutcome(ReturnRequestResponseDto response)
+    {
+        var activity = Activity.Current;
+        if (activity is null)
+        {
+            return;
+        }
+
+        activity.SetTag("palacio.return_id", response.Id);
+        activity.SetTag("palacio.purchase_amount", response.PurchaseAmount);
+        activity.SetTag("palacio.eligibility_status", response.EligibilityStatus);
+        activity.SetTag("palacio.inspection_status", response.StoreInspectionStatus);
+        activity.SetTag("palacio.fraud_review_status", response.FraudReviewStatus);
+        activity.SetTag("palacio.refund_status", response.RefundStatus);
     }
 
     /// <summary>
