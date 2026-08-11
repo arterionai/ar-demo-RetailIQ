@@ -1,0 +1,37 @@
+name: copilot-setup-steps
+
+# Prepara el entorno efímero del Copilot cloud agent (`copilot-swe-agent`) antes de que empiece a
+# trabajar en un issue asignado.
+#
+# Por qué existe: global.json pinea el SDK 8.0.423 con `rollForward: latestFeature`, así que un
+# runner que traiga un 8.0.1xx falla en `dotnet restore` — el agente se atoraría antes de leer una
+# línea de código. Aquí se instala el SDK exacto del repo, igual que hace dotnet-ci.yml.
+#
+# El nombre del job TIENE que ser `copilot-setup-steps` para que GitHub lo reconozca.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET (desde global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
