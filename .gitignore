@@ -25,3 +25,19 @@ Thumbs.db
 ## Node (web/ placeholder, Fase 2)
 node_modules/
 dist/
+
+## Secrets y configuración local — nunca commitear (ver docs/constitution.md §5.3)
+## El connection string de Application Insights y la API key de Azure OpenAI viven en
+## dotnet user-secrets / variables de entorno, no en el repo.
+.env
+.env.*
+!.env.example
+*.env
+appsettings.Local.json
+
+## Volcados de credenciales que a veces quedan sueltos en la raíz al copiar la salida de
+## `az ad sp create-for-rbac`. Si aparece uno: rótalo con `az ad sp credential reset` y bórralo.
+## Esta guarda existe para que ningún `git add -A` lo suba por accidente.
+Untitled-*.json
+*credentials*.json
+*secret*.json
