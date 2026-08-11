@@ -50,6 +50,14 @@ Esta demo pone tres productos a resolver ese problema juntos, cada uno haciendo 
 
 > **Uno recuerda. Otro vigila. Otro construye. Y entre los tres, lo que se decidió sigue cumpliéndose.**
 
+Dicho de otra forma — y esta es la manera más corta de explicar por qué son tres y no uno, cada uno resolviendo un tipo de olvido distinto:
+
+| Agente | Qué resuelve |
+|---|---|
+| **Work IQ** | Recupera lo que la organización **ya sabía** y tenía disperso |
+| **Azure SRE Agent** | Encuentra lo que **nadie estaba buscando** |
+| **GitHub Copilot** | Construye lo que se decidió — y hace lo que **nadie tenía tiempo de hacer** |
+
 La historia se cuenta a través de un caso concreto: **Sofía compró en línea un vestido para una gala el sábado y la talla no le quedó.** Alrededor de ese caso se mueven una product manager que acaba de llegar, un ingeniero, un asociado de tienda y una gerente de operaciones. Todos tocan el mismo caso, desde herramientas distintas.
 
 ---
@@ -198,6 +206,7 @@ El Copilot cloud agent **no** es el Agent Mode que uso en el editor: corre en un
 - El pull request (**#10**, rama `copilot/fix-race-condition-fraud-reviews`) está en **draft**, con el test de concurrencia dentro y los checks de `dotnet-ci` en verde.
 - **No lo mergeo.** El defecto tiene que seguir vivo en `main` para que Copilot lo encuentre en vivo durante el tiempo 4. Si se mergea, la Escena 5 pierde su segundo hallazgo.
 - Dejo dos pestañas más listas: el issue #9 (mostrando a Copilot como asignado) y el PR #10 (mostrando el test y los checks).
+- **Corro `./scripts/check-cloud-agent.ps1`**, que verifica de una sola vez las siete condiciones: diff no vacío, que toque el componente del defecto y el proyecto de pruebas, CI en verde, issue asignado a Copilot y PR sin mergear. **Si devuelve error, el Tiempo 5 no se presenta.** Es la última palabra, por encima de lo que parezca al leer el pull request.
 
 > ⚠️ **Se dice "lo arregló", nunca "lo está arreglando".** El trabajo ocurrió antes de la demo, cuando se le asignó el issue. Si alguien pregunta si está corriendo ahora, la respuesta es no — y no pasa nada, porque el artefacto es verificable: está en el repositorio, con su rama y su historial de commits.
 
@@ -207,6 +216,7 @@ El Copilot cloud agent **no** es el Agent Mode que uso en el editor: corre en un
 - Los dos prompts de Copilot (§9 y §12) listos para pegar.
 - El número del issue que abrió el SRE Agent.
 - Las pestañas del issue **#9** y del PR **#10** del cloud agent, ya cargadas.
+- **El documento *Arquitectura objetivo — Devolución omnicanal* abierto en SharePoint**, listo para seleccionar y copiar justo antes de la Escena 2 (no antes: pisaría el folio de Sofía en el portapapeles).
 - El portapapeles vacío: el folio de Sofía se copia en vivo, en la Escena 3.
 
 ---
@@ -307,9 +317,26 @@ Jorge recibe todo ese contexto que María acaba de reconstruir. No necesita rele
 
 > *"Con todo ese contexto que Work IQ acaba de reconstruir, Jorge no necesita releer documentación ni preguntar en Slack. Se lo pasa directamente a GitHub Copilot."*
 
-**2. Pego el prompt.** Este es el texto literal:
+### El prompt va en dos bloques: uno se pega, el otro se escribe
 
-> *Con el contexto que Work IQ acaba de reconstruir sobre devoluciones omnicanal — ADR-014 (todo pasa por Returns Orchestrator, ningún canal de cliente decide el reembolso, SAP solo participa después de la inspección aprobada) y el incidente de noviembre 2025 (recibido ≠ aprobado, revisión antifraude obligatoria para montos > MXN $25,000) — agrega el endpoint que falta hoy: consultar el estatus de una devolución por ID.*
+La separación es deliberada, y es lo que hace honesta la escena: **el arquitecto no inventa el requerimiento, y el ingeniero no inventa la arquitectura.**
+
+| Bloque | Qué es | De dónde sale | Quién lo produce |
+|---|---|---|---|
+| **1 — Contexto** | El documento *Arquitectura objetivo — Devolución omnicanal*, de Laura Martínez, **completo y tal cual** | SharePoint, copiado de antemano | La organización |
+| **2 — Requerimiento** | Los requisitos técnicos | Lo escribo yo, en vivo | El ingeniero |
+
+**2. Pego el Bloque 1** — el documento de arquitectura completo — y digo mientras se pega:
+
+> *"Esto no lo escribí yo. Es el documento de arquitectura de Laura, tal como está en SharePoint."*
+
+Es el documento de SharePoint, **no el `ADR-014-returns-orchestration.md` del repositorio**: ese Copilot ya lo tiene en el workspace, así que pegarlo no demostraría nada. El de SharePoint es el que trae el diagrama de componentes y los cinco principios, y sobre todo **el único que dice explícitamente que la app móvil "solo captura intención y presenta estatus"** — que es literalmente la razón de que este endpoint sea de solo lectura. Esa frase es el porqué de toda la escena.
+
+> ⚠️ Lo copio de SharePoint y **no lo guardo dentro del repositorio**. Si estuviera en el workspace, Copilot lo leería solo y el gesto de pegarlo sería teatro. Si quiero respaldo local por si SharePoint no carga, va **fuera** del repo.
+
+**3. Escribo el Bloque 2**, el requerimiento:
+
+> *Con ese contexto, y considerando el incidente de noviembre de 2025 (`#file:docs/runbooks/incident-2025-11-return-fraud.md`), agrega el endpoint que falta hoy: consultar el estatus de una devolución por ID.*
 >
 > *Requisitos:*
 >
@@ -323,19 +350,23 @@ Jorge recibe todo ese contexto que María acaba de reconstruir. No necesita rele
 >
 > *— Prepara un mensaje de PR breve citando ADR-014 y el incidente de noviembre como contexto de por qué este endpoint es de solo lectura.*
 
-**3. Mientras Copilot trabaja, narro lo que está pasando por dentro:**
+La línea de inyectar `IReturnRequestRepository` va **textual**: sin ella Copilot se detiene a elegir entre dos diseños igual de válidos, y esa pausa en vivo no la quiero.
 
-> *"Esto no es autocompletado. Está leyendo el ADR real, el incidente real, y las convenciones de capas de este proyecto — y va a respetar todo eso sin que nadie se lo repita."*
+**4. Mientras Copilot trabaja, narro lo que está pasando por dentro:**
 
-**4. Cuando termina, muestro el resultado.** Lo que debería haber hecho:
+> *"Esto no es autocompletado. Está leyendo el documento de arquitectura que acabo de pegar, el incidente real del repositorio, y las convenciones de capas de este proyecto — y va a respetar todo eso sin que nadie se lo repita."*
+
+**5. Cuando termina, muestro el resultado.** Lo que debería haber hecho:
 
 - Un nuevo `GetReturnStatus` en `ReturnsController.cs`, **reutilizando el `ToResponseDto` privado que ya existía** — sin duplicar lógica.
 - Reusar `IReturnRequestRepository.GetByIdAsync`, que ya existía. Copilot no lo inventó ni asumió que hacía falta agregarlo: revisó antes de asumir.
 - Dos tests nuevos siguiendo la convención del proyecto `MethodName_Should[Expected]_When[Condition]`.
 
-**5. Corro `dotnet test` en la terminal y muestro el verde: 11/11.**
+**6. Corro `dotnet test` en la terminal y muestro el verde: 11/11.**
 
-**6. Muestro el texto del pull request que redactó**, que cita el ADR y el runbook del incidente, y explica por qué este endpoint es deliberadamente de solo lectura: para no reintroducir la ambigüedad recibido/aprobado que causó el incidente.
+**7. Muestro el texto del pull request que redactó**, que cita el ADR y el runbook del incidente, y explica por qué este endpoint es deliberadamente de solo lectura: para no reintroducir la ambigüedad recibido/aprobado que causó el incidente. Y amarro el bloque pegado con el resultado:
+
+> *"Fíjense en la justificación que escribió: este endpoint es de solo lectura porque la app presenta estatus, no decide. Eso no se lo dije yo — estaba en el documento de arquitectura de Laura, y Copilot lo usó como razón de diseño."*
 
 ### Lo que quiero que noten
 
@@ -344,6 +375,8 @@ Que las pruebas pasan **a la primera**, sin un ciclo de corrección. Y que el me
 ### Si algo falla
 
 El prompt ya resuelve explícitamente la única ambigüedad de diseño que el ensayo reveló (dónde inyectar el repositorio), así que no debería titubear. Si el build o los tests tardan o fallan, **dejo que itere**: un ciclo de corrección en vivo es creíble y honesto. No muestro un resultado pregrabado.
+
+> ⚠️ **Pendiente de ensayo.** El 11/11 en verde está verificado con el prompt anterior, donde el contexto era un párrafo tecleado a mano en vez del documento de SharePoint pegado. El Bloque 2 es idéntico al verificado, así que el riesgo es bajo — pero conviene correrlo una vez completo en un worktree aislado, verificando en concreto que **el mensaje del PR siga citando el incidente de noviembre**: eso es lo primero que se degrada al sacar el incidente del texto tecleado.
 
 ### Por qué esta escena existe
 
@@ -605,9 +638,13 @@ Copilot encuentra **dos** cosas:
 
 > *"Esa segunda cosa —la fina, la intermitente, la que nadie logra reproducir— Copilot acaba de encontrarla frente a ustedes. Pero no es el primero en verla."*
 
-**13. Abro la pestaña del issue #9 en GitHub** y señalo el campo de asignado.
+**13. Abro la pestaña del issue #9 en GitHub** y señalo el campo de asignado. **La procedencia del issue importa: el autor se ve en pantalla.**
 
-> *"Este issue está en el repositorio desde antes de esta reunión. Y miren quién lo tiene asignado: no es una persona. Es Copilot. Se le asignó un issue exactamente como se le asigna a alguien del equipo."*
+> *"Este issue lo abrió Jorge hace semanas, por una corazonada de code review. Y ahí se quedó. No porque a nadie le importara, sino porque es un fallo de uno en quinientos, imposible de reproducir a mano — de los que se cierran a los seis meses como 'no se pudo replicar'. Todos tienen uno de estos en su backlog.*
+>
+> *Y miren quién lo tiene asignado: no es una persona. Es Copilot. Se le asignó exactamente como se le asigna a alguien del equipo."*
+
+No se puede insinuar que el issue lo levantó el SRE Agent — **no pudo haberlo hecho**: la condición de carrera aparece ~1 vez cada 400-700 inspecciones, y por eso el runbook dice explícitamente que no se planee mostrarla en telemetría. Atribuirlo a una corazonada humana es lo que de verdad pasó, y además es lo que le da a este tiempo un argumento propio.
 
 **14. Abro la pestaña del PR #10.** Señalo tres cosas, sin leer el diff completo: la rama que creó él, el test de concurrencia, y los checks de `dotnet-ci` en verde.
 

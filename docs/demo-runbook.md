@@ -521,13 +521,20 @@ del Tiempo 4.
 |---|---|
 | `copilot-swe-agent` asignable en el repo | ✅ verificado — aparece en `suggestedActors` con `CAN_BE_ASSIGNED`; no hizo falta habilitar nada |
 | Branch protection / rulesets que bloqueen al agente | ✅ ninguna en `main` — la incompatibilidad documentada no aplica |
-| `.github/workflows/copilot-setup-steps.yml` | ⚠️ **creado pero NO commiteado ni subido a `main`** — no surte efecto hasta que esté en la rama default |
+| `.github/workflows/copilot-setup-steps.yml` | ~~⚠️ creado pero NO commiteado ni subido a `main`~~ → ✅ **ya está en `main`** (ver nota de corrección abajo) |
 | Issue #9 asignado a Copilot | ✅ abierto y asignado a *Copilot* |
 | PR #10 con el arreglo | ❌ **vacío** — ver abajo |
 
+> **Nota de corrección — Claude Code, 2026-08-11.** La fila de `copilot-setup-steps.yml` decía que
+> el workflow no estaba commiteado. Ya no aplica: está en el commit `0f553e3` ("ci: pin the .NET SDK
+> for the Copilot cloud agent environment") y verificado presente en `origin/main` con
+> `git ls-tree origin/main .github/workflows/`. **Eso deja hecho el punto 3 de "Qué falta para que
+> el Tiempo 5 se pueda presentar"** — el bloqueador real sigue siendo únicamente el modelo del
+> coding agent. No reescribí el resto de la sección por ser de otra sesión.
+
 **Por qué existe `copilot-setup-steps.yml`:** `global.json` pinea el SDK `8.0.423` con
 `rollForward: latestFeature`. Un runner con un 8.0.1xx falla en `dotnet restore` y el agente se
-atoraría antes de leer código. El workflow instala el SDK exacto del repo. **Sigue sin subirse.**
+atoraría antes de leer código. El workflow instala el SDK exacto del repo.
 
 #### Lo que pasó de verdad el 3 de agosto de 2026 (medido, no estimado)
 
@@ -595,10 +602,12 @@ pestaña de Actions o del PR. Esto hay que hacerlo en la preparación, no en viv
 2. Volver a asignar el issue #9 y confirmar en el log del run que el agente **sí hace llamadas a
    herramientas** (`tool call(s)` distinto de 0). Si sigue en cero con otro modelo, reportar a
    soporte de GitHub.
-3. Commitear y subir `.github/workflows/copilot-setup-steps.yml` a `main` — no arregla el bloqueador
-   actual, pero evita el siguiente: sin él, un runner con SDK 8.0.1xx falla en `dotnet restore`.
+3. ~~Commitear y subir `.github/workflows/copilot-setup-steps.yml` a `main`~~ — ✅ **hecho**
+   (commit `0f553e3`, verificado en `origin/main` el 2026-08-11; ver nota de corrección arriba).
 3. Verificar con `git diff origin/main...origin/copilot/fix-race-condition-fraud-reviews` que el diff
    **no está vacío** y que toca `FraudReviewGateway.cs` y el proyecto de tests.
+   **Atajo:** `./scripts/check-cloud-agent.ps1` corre esta verificación y las de los puntos 5 y 7 de
+   una sola vez, y devuelve exit 0 solo si el Tiempo 5 se puede presentar.
 4. Confirmar que el test de concurrencia **falla contra `main`** y pasa con el cambio. Sin esto, la
    frase "lo arregló de verdad" no es verificable.
 5. Aprobar el run de `dotnet-ci` en el PR y confirmar que queda en verde.
