@@ -7,7 +7,6 @@ import type {
 /**
  * Cliente HTTP fino sobre Palacio.Returns.Api (ver docs/constitution.md §3.1).
  * La API real corre en http://localhost:5163 (perfil `http` de `dotnet run`, ver launchSettings.json).
- * Solo existen 3 endpoints POST hoy — no existe ningún GET (ver README del proyecto).
  */
 const API_BASE_URL = "http://localhost:5163";
 
@@ -72,7 +71,17 @@ export async function submitInspectionDecision(
   return handleResponse<ReturnRequestResponseDto>(response);
 }
 
-// TODO(demo-live-build): se conecta a GET /api/returns/{id} durante la presentación en vivo.
-// Hoy el backend NO expone ningún endpoint GET (es intencional, ver README del proyecto) —
-// por eso "Buscar por folio" en la UI queda deshabilitado con un tooltip en vez de intentar
-// una llamada real que fallaría o no existiría.
+/**
+ * GET /api/returns/{id} — busca un caso existente por folio/ID (usado por "Buscar por folio").
+ * Devuelve null en 404 (folio no encontrado) en vez de lanzar, para que la UI muestre un mensaje
+ * de "no encontrado" en vez de un error genérico.
+ */
+export async function searchReturnByFolio(
+  id: string,
+): Promise<ReturnRequestResponseDto | null> {
+  const response = await fetch(`${API_BASE_URL}/api/returns/${id}`);
+  if (response.status === 404) {
+    return null;
+  }
+  return handleResponse<ReturnRequestResponseDto>(response);
+}

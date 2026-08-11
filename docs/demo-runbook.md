@@ -107,6 +107,54 @@ corra en vivo, "Buscar por folio" en Operations Console y por lo tanto la Escena
 funcionar** — eso es intencional, es lo que hace que el orden Escena 2 → Escena 4 tenga sentido
 dramático (Copilot construye la pieza que el asociado necesita, y de inmediato se usa).
 
+### ⚠️ El revert se había llevado también el frontend — corregido el 11 de agosto de 2026
+
+**Esto era un fallo que rompía la Escena 4.** El revert `2fc8e21` quitó el endpoint del backend
+(intencional) **pero además borró el frontend que lo consumía**, que se había construido en
+`b8a913e`:
+
+| Archivo | Qué se había perdido |
+|---|---|
+| `web/operations-console/.../FolioSearchInput.tsx` | 85 líneas: el input funcional, el botón Buscar, el estado de carga y el mensaje "No se encontró ese folio" |
+| `web/operations-console/.../hooks/ReturnCasesContext.tsx` | 41 líneas: la lógica `searchFolio` |
+| `web/operations-console/src/lib/api-client.ts` | La función `searchReturnByFolio` |
+
+Lo que quedó en su lugar fue un input con **`disabled` clavado en el código** y un badge estático
+"Próximamente" — no condicional. Es decir: **la Escena 2 podía correr perfecto, quedar en 11/11
+verde, y la consola seguiría diciendo "Próximamente" para siempre**, porque el prompt de la Escena 2
+solo pide el backend. Sin búsqueda por folio, el asociado no tiene ninguna forma de traer el caso
+real que Sofía acaba de crear: la cola visible son 3 mocks estáticos cuyos IDs no son GUIDs de la
+API.
+
+**Corregido**: los tres archivos se restauraron tal cual desde `b8a913e`. Se descartó ampliar el
+prompt de la Escena 2 para que Copilot construyera también el frontend — habría invalidado el 11/11
+ya verificado y alargado una escena de 2 minutos.
+
+**Verificado tras la restauración:**
+
+- `tsc -b --noEmit` de `operations-console` en limpio.
+- Un `GET /api/returns/{cualquier-cosa}` contra la API sin el endpoint devuelve **404** (probado con
+  un GUID y con un folio tipo `WEB-58317`), y **CORS responde al origen `http://localhost:5174`**.
+  Eso importa: el navegador ve el 404 limpio y la UI muestra *"No se encontró ese folio."* en vez de
+  un error de CORS genérico. **El fallo previo a la Escena 2 es elegante, no roto.**
+- El backend sigue sin `HttpGet`: la Escena 2 sigue siendo una construcción en vivo genuina.
+- Este mismo código **ya estaba verificado de punta a punta** cuando el endpoint existía (ver el
+  pendiente cerrado de la Escena 4: folio search real + hub SignalR + línea de tiempo animada). Lo
+  único que le faltaba era el endpoint, que es justo lo que la Escena 2 construye.
+
+**Beneficio narrativo que esto habilita**: la dependencia Escena 2 → Escena 4 deja de ser una
+afirmación de este runbook y se vuelve visible en pantalla. Al inicio de la Escena 2 el presentador
+enseña la búsqueda sin nada detrás; en la Escena 4 la misma caja trae el caso real de Sofía. Ver
+`docs/demo-script.md`, Escena 2 ("Antes de construir: enseña el hueco") y Escena 4.
+
+> ⚠️ **Precisión obligatoria al narrar el hueco:** el "No se encontró ese folio" es idéntico a lo que
+> se vería si el folio simplemente no existiera — **la pantalla no prueba que falte el endpoint.** El
+> presentador afirma "no hay nada detrás" como algo que sabe y está por demostrar construyéndolo,
+> nunca como algo que la pantalla acaba de demostrar.
+
+**`reset-demo.ps1` no necesita cambios por esto.** Copilot solo toca `src/` en las Escenas 2 y 5; el
+frontend restaurado queda permanente en `main` y ningún ensayo lo modifica.
+
 **Quién actúa:** Jorge Ramírez (o el presentador en su nombre), en VS Code con Copilot Agent Mode
 abierto sobre el repo `arterionai/ar-demo-RetailIQ`.
 

@@ -54,6 +54,12 @@ agent). Nunca recortes la Escena 4, ni el reporte del SRE Agent.
       (`5173`), Operations Console (`5174`).
 - [ ] Confirmar que el endpoint `GET /api/returns/{id}` **NO existe** en `main` en este momento
       (`main` en 9/9 tests) — si por error ya está ahí, la Escena 2 pierde su efecto.
+      Atajo: `./scripts/reset-demo.ps1 -Check`.
+- [ ] En Operations Console, la búsqueda por folio tiene que estar **habilitada** con su botón
+      **Buscar** — no un badge de "Próximamente". Escribe cualquier folio y confirma que sale
+      **"No se encontró ese folio."** (eso es lo correcto antes de la Escena 2: el frontend ya
+      existe, el endpoint todavía no). Si ves "Próximamente", el frontend está en la versión vieja y
+      **la Escena 4 no va a funcionar** ni después de construir el endpoint.
 - [ ] Idealmente dos pantallas/proyecciones visibles a la vez para la Escena 4 (Mi Palacio +
       Operations Console lado a lado). Si solo hay una pantalla, tenerlo ensayado con
       alt-tab rápido.
@@ -231,6 +237,28 @@ una respuesta que no salió en pantalla.)*
 > "Con todo ese contexto que Work IQ acaba de reconstruir, Jorge —el ingeniero— no necesita
 > releer documentación ni preguntar en Slack. Se lo pasa directamente a GitHub Copilot."
 
+### Antes de construir: enseña el hueco (~15 s, no lo alargues)
+
+Esto le da a la escena un usuario con un problema, en lugar de un endpoint abstracto. Y prepara el
+pago de la Escena 4, donde **esta misma caja** va a traer el caso real de Sofía.
+
+**HACER:** cambiar a **Operations Console** (`localhost:5174`), vista *Asociado de Tienda*. Escribir
+cualquier folio en **Buscar por folio** y darle Buscar. Sale **"No se encontró ese folio."**
+
+**DECIR:**
+
+> "Miren esta caja de búsqueda. El asociado en tienda tiene que poder traer el caso de una clienta
+> que ya inició su devolución desde la app. Y no puede: **no hay nada detrás.** El backend de
+> Palacio hoy solo sabe *crear* devoluciones y *avanzarlas* — no sabe *consultar* una. Eso es lo que
+> falta, y es lo que voy a construir ahora."
+
+> ⚠️ **Precisión al narrar:** el "No se encontró ese folio" es lo mismo que verías si el folio
+> simplemente no existiera — la pantalla **no prueba** que falte el endpoint. Di "no hay nada
+> detrás" como algo que tú sabes y estás por demostrar construyéndolo, nunca como algo que la
+> pantalla acaba de demostrar. Si alguien pregunta, la respuesta honesta es: *"exacto, desde la UI
+> se ve igual; en un minuto van a ver el endpoint aparecer y esta misma búsqueda empezar a
+> funcionar."*
+
 ### El prompt va en DOS bloques — uno se pega, el otro se escribe
 
 Esta separación es deliberada y es lo que hace honesta la escena: **el arquitecto no inventa el
@@ -297,7 +325,12 @@ verde. Mostrar el texto del PR que redactó.
 **Frase de cierre de escena:**
 
 > "La conversación no terminó en una minuta. Se convirtió, en minutos, en un cambio de software
-> real, probado, y listo para revisión."
+> real, probado, y listo para revisión. Y esa caja de búsqueda que no servía, ahora tiene algo
+> detrás. En un momento se los voy a probar."
+
+> **No vuelvas a la consola todavía.** Sofía aún no ha creado su caso —eso pasa en la Escena 3—, así
+> que buscar ahora daría "no encontrado" otra vez y desinflaría el momento. El pago va en la Escena
+> 4, con su folio real. Esa promesa es lo que amarra las tres escenas.
 
 *(Fallback: si Copilot titubea en la decisión de diseño de dónde inyectar el repositorio, el
 prompt ya lo especifica explícitamente — no debería pasar. Si el build/test tarda o falla, ten
@@ -386,9 +419,11 @@ de Mi Palacio (Escena 3) siga visible al mismo tiempo (dos monitores, o pantalla
 anticipación — se ve en Mi Palacio como "SOLICITUD XXXXXXXX", pero necesitas el ID completo;
 tenlo ya en el portapapeles antes de llegar a esta escena). Clic en **Buscar**.
 
-**DECIR:**
+**DECIR (cobra la promesa de la Escena 2 — no te la saltes, es el arco completo):**
 
-> "Este es el caso real de Sofía — el mismo que acabamos de crear, no uno de ejemplo."
+> "Esta es la misma caja que hace cinco minutos no encontraba nada. Ahora tiene detrás el endpoint
+> que Copilot construyó frente a ustedes. Y esto que trajo es el caso real de Sofía — el mismo que
+> acabamos de crear, no uno de ejemplo."
 
 **HACER:** clic en **"Recibir artículo"**. **Pausa. Señala la otra pantalla.**
 

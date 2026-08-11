@@ -317,6 +317,14 @@ Jorge recibe todo ese contexto que María acaba de reconstruir. No necesita rele
 
 > *"Con todo ese contexto que Work IQ acaba de reconstruir, Jorge no necesita releer documentación ni preguntar en Slack. Se lo pasa directamente a GitHub Copilot."*
 
+**1b. Antes de construir, enseño el hueco — 15 segundos, no más.** Cambio a Operations Console (`localhost:5174`), vista *Asociado de Tienda*, escribo cualquier folio en **Buscar por folio** y le doy Buscar. Sale **"No se encontró ese folio."**
+
+> *"Miren esta caja de búsqueda. El asociado en tienda tiene que poder traer el caso de una clienta que ya inició su devolución desde la app. Y no puede: **no hay nada detrás.** El backend de Palacio hoy solo sabe crear devoluciones y avanzarlas — no sabe consultar una. Eso es lo que falta, y es lo que voy a construir ahora."*
+
+Esto le da a la escena un usuario con un problema en lugar de un endpoint abstracto, y prepara el pago de la Escena 4, donde esa misma caja va a traer el caso real de Sofía.
+
+> ⚠️ **Precisión al narrar:** ese "No se encontró ese folio" es idéntico a lo que se vería si el folio simplemente no existiera — **la pantalla no prueba que falte el endpoint.** Digo "no hay nada detrás" como algo que yo sé y estoy por demostrar construyéndolo, nunca como algo que la pantalla acaba de demostrar. Si alguien lo cuestiona, la respuesta honesta es: *"exacto, desde la UI se ve igual; en un minuto van a ver el endpoint aparecer y esta misma búsqueda empezar a funcionar."*
+
 ### El prompt va en dos bloques: uno se pega, el otro se escribe
 
 La separación es deliberada, y es lo que hace honesta la escena: **el arquitecto no inventa el requerimiento, y el ingeniero no inventa la arquitectura.**
@@ -466,9 +474,9 @@ Sofía llegó a la tienda. El asociado tiene la prenda enfrente. Lo que va a hac
 
 > *"Ahora cambiamos a la otra pantalla — el asociado de Palacio Santa Fe, con el vestido de Sofía en sus manos."*
 
-**2. Pego el folio real de Sofía** en "Buscar por folio / ID de caso" y hago clic en **Buscar**.
+**2. Pego el folio real de Sofía** en "Buscar por folio / ID de caso" y hago clic en **Buscar**. Aquí cobro la promesa que dejé en la Escena 2 — no me la salto, es el arco completo:
 
-> *"Este es el caso real de Sofía — el mismo que acabamos de crear, no uno de ejemplo."*
+> *"Esta es la misma caja que hace cinco minutos no encontraba nada. Ahora tiene detrás el endpoint que Copilot construyó frente a ustedes. Y esto que trajo es el caso real de Sofía — el mismo que acabamos de crear, no uno de ejemplo."*
 
 **3. Hago clic en "Recibir artículo". Pauso. Señalo la otra pantalla.**
 
