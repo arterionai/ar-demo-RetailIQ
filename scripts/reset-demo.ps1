@@ -94,13 +94,26 @@ function Get-TestResult {
     $out = dotnet test --nologo -v q 2>&1 | Out-String
     if ($out -match 'Failed:\s+(\d+),\s+Passed:\s+(\d+),\s+Skipped:\s+(\d+),\s+Total:\s+(\d+)') {
         return [pscustomobject]@{
-            Failed = [int]$Matches[1]
-            Passed = [int]$Matches[2]
-            Total  = [int]$Matches[4]
-            Raw    = $out
+            Failed  = [int]$Matches[1]
+            Passed  = [int]$Matches[2]
+            Total   = [int]$Matches[4]
+            Locked  = $false
+            Raw     = $out
         }
     }
-    return [pscustomobject]@{ Failed = -1; Passed = -1; Total = -1; Raw = $out }
+
+    # La API corriendo mantiene abiertos los DLLs de salida, así que `dotnet test` no puede
+    # recompilar y MSBuild falla con MSB3021/MSB3027. Eso NO significa que las invariantes estén
+    # mal: significa que no se pudieron medir. Distinguirlo importa, porque este es el estado normal
+    # justo después de un ensayo — y reportarlo como "invariantes incumplidas" manda a revisar un
+    # problema que no existe.
+    $locked = $out -match 'MSB302[17]|being used by another process'
+
+    return [pscustomobject]@{ Failed = -1; Passed = -1; Total = -1; Locked = $locked; Raw = $out }
+}
+
+function Test-ApiRunning {
+    return $null -ne (Get-NetTCPConnection -State Listen -LocalPort 5163 -ErrorAction SilentlyContinue)
 }
 
 function Write-State {
@@ -140,6 +153,15 @@ function Write-State {
         $t = Get-TestResult
         if ($t.Total -eq 9 -and $t.Failed -eq 0) {
             Write-Host "  [OK]    9/9 en verde -> los dos defectos siguen plantados y sin detectar" -ForegroundColor Green
+        }
+        elseif ($t.Locked) {
+            # Estado esperado justo después de un ensayo: no es una falla, es una medición que no se
+            # pudo tomar.
+            Write-Host "  [?]     no se pudieron correr los tests: la API está corriendo y tiene los" -ForegroundColor Yellow
+            Write-Host "          DLLs bloqueados. Eso NO es una falla del reset." -ForegroundColor Yellow
+            Write-Host "          Detén la API (necesitas reiniciarla de todos modos, por los 30 min" -ForegroundColor DarkGray
+            Write-Host "          de memoria del gateway antifraude) y vuelve a correr -Check." -ForegroundColor DarkGray
+            return $noGet
         }
         elseif ($t.Total -lt 0) {
             Write-Host "  [MAL]   no se pudo interpretar la salida de dotnet test" -ForegroundColor Red
@@ -271,6 +293,14 @@ if ($untracked.Count -gt 0) {
 }
 Write-Host ""
 Write-Host "Nada fuera de src/ se toca." -ForegroundColor DarkGray
+
+if (Test-ApiRunning) {
+    Write-Host ""
+    Write-Host "AVISO: la API está corriendo en 5163." -ForegroundColor Yellow
+    Write-Host "  El reset funciona igual, pero los tests de verificación no van a poder correr:" -ForegroundColor DarkGray
+    Write-Host "  la API mantiene bloqueados los DLLs de salida. Tendrás que detenerla y correr" -ForegroundColor DarkGray
+    Write-Host "  -Check después — y de todos modos hay que reiniciarla antes del siguiente ensayo." -ForegroundColor DarkGray
+}
 
 if (-not $Force) {
     $answer = Read-Host "¿Continuar? (escribe SI)"

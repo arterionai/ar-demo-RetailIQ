@@ -54,10 +54,23 @@ agent). Nunca recortes la Escena 4, ni el reporte del SRE Agent.
       (`5173`), Operations Console (`5174`).
 - [ ] Confirmar que el endpoint `GET /api/returns/{id}` **NO existe** en `main` en este momento
       (`main` en 9/9 tests) — si por error ya está ahí, la Escena 2 pierde su efecto.
+      Atajo: `./scripts/reset-demo.ps1 -Check`.
+- [ ] En Operations Console, la búsqueda por folio tiene que estar **habilitada** con su botón
+      **Buscar** — no un badge de "Próximamente". Escribe cualquier folio y confirma que sale
+      **"No se encontró ese folio."** (eso es lo correcto antes de la Escena 2: el frontend ya
+      existe, el endpoint todavía no). Si ves "Próximamente", el frontend está en la versión vieja y
+      **la Escena 4 no va a funcionar** ni después de construir el endpoint.
 - [ ] Idealmente dos pantallas/proyecciones visibles a la vez para la Escena 4 (Mi Palacio +
       Operations Console lado a lado). Si solo hay una pantalla, tenerlo ensayado con
       alt-tab rápido.
-- [ ] Copiado al portapapeles: nada todavía — el folio de Sofía se copia en vivo, en la Escena 3.
+- [ ] **Escena 2 — el documento de contexto listo para pegar.** Abre en SharePoint *Arquitectura
+      objetivo — Devolución omnicanal* (el de Laura Martínez) y déjalo en una pestaña, listo para
+      seleccionar y copiar. **No es el `ADR-014-returns-orchestration.md` del repo** — ese Copilot
+      ya lo tiene en el workspace. Si quieres respaldo local por si SharePoint no carga, guárdalo
+      **fuera** del repositorio: dentro, Copilot lo lee solo y pegarlo deja de significar algo.
+- [ ] Copiado al portapapeles: nada todavía — el folio de Sofía se copia en vivo con el botón
+      **"Copiar folio"** de Mi Palacio, entre la Escena 3 y la 4. Nunca a mano.
+      (El documento de la Escena 2 se copia justo antes de esa escena, para no pisar el folio.)
 
 **Específico de la Escena 5 (Application Insights) — hazlo en este orden:**
 
@@ -116,6 +129,11 @@ artefactos ya terminados.
       asignado) y el **PR #10** (mostrando el test de concurrencia y los checks en verde).
 - [ ] Confirmar en el PR que el test de concurrencia falla contra `main` y pasa con el cambio — es
       lo único que hace verificable la afirmación "lo arregló de verdad".
+- [ ] **Correr `./scripts/check-cloud-agent.ps1`.** Verifica de una sola vez las siete condiciones
+      de arriba (diff no vacío, que toque `FraudReviewGateway.cs` y el proyecto de tests, CI en
+      verde, issue asignado a Copilot, PR sin mergear). **Si devuelve exit 1, el Tiempo 5 no se
+      presenta** — cierra la escena en el Tiempo 4. Es la última palabra, por encima de lo que
+      parezca al leer el PR.
 
 > ⚠️ **Igual que con el SRE Agent: se dice "lo arregló", nunca "lo está arreglando".** El trabajo
 > ocurrió antes de la demo. Si alguien pregunta si está corriendo ahora, la respuesta es no — corrió
@@ -220,12 +238,63 @@ una respuesta que no salió en pantalla.)*
 > "Con todo ese contexto que Work IQ acaba de reconstruir, Jorge —el ingeniero— no necesita
 > releer documentación ni preguntar en Slack. Se lo pasa directamente a GitHub Copilot."
 
-**HACER:** cambiar a VS Code, abrir Copilot Agent Mode, escribir exactamente:
+### Antes de construir: enseña el hueco (~15 s, no lo alargues)
 
-> *"Con el contexto que Work IQ acaba de reconstruir sobre devoluciones omnicanal — ADR-014 (todo
-> pasa por Returns Orchestrator, ningún canal de cliente decide el reembolso, SAP solo participa
-> después de la inspección aprobada) y el incidente de noviembre 2025 (recibido ≠ aprobado,
-> revisión antifraude obligatoria para montos > MXN $25,000) — agrega el endpoint que falta hoy:
+Esto le da a la escena un usuario con un problema, en lugar de un endpoint abstracto. Y prepara el
+pago de la Escena 4, donde **esta misma caja** va a traer el caso real de Sofía.
+
+**HACER:** cambiar a **Operations Console** (`localhost:5174`), vista *Asociado de Tienda*. Escribir
+cualquier folio en **Buscar por folio** y darle Buscar. Sale **"No se encontró ese folio."**
+
+**DECIR:**
+
+> "Miren esta caja de búsqueda. El asociado en tienda tiene que poder traer el caso de una clienta
+> que ya inició su devolución desde la app. Y no puede: **no hay nada detrás.** El backend de
+> Palacio hoy solo sabe *crear* devoluciones y *avanzarlas* — no sabe *consultar* una. Eso es lo que
+> falta, y es lo que voy a construir ahora."
+
+> ⚠️ **Precisión al narrar:** el "No se encontró ese folio" es lo mismo que verías si el folio
+> simplemente no existiera — la pantalla **no prueba** que falte el endpoint. Di "no hay nada
+> detrás" como algo que tú sabes y estás por demostrar construyéndolo, nunca como algo que la
+> pantalla acaba de demostrar. Si alguien pregunta, la respuesta honesta es: *"exacto, desde la UI
+> se ve igual; en un minuto van a ver el endpoint aparecer y esta misma búsqueda empezar a
+> funcionar."*
+
+### El prompt va en DOS bloques — uno se pega, el otro se escribe
+
+Esta separación es deliberada y es lo que hace honesta la escena: **el arquitecto no inventa el
+requerimiento, y el ingeniero no inventa la arquitectura.**
+
+| Bloque | Qué es | De dónde sale | Quién lo produce |
+|---|---|---|---|
+| **1 — Contexto** | El documento *Arquitectura objetivo — Devolución omnicanal* (de Laura Martínez, el que referencia ADR-014), **completo y tal cual** | SharePoint — **copiado de antemano** | La organización |
+| **2 — Requerimiento** | Los requisitos técnicos de abajo | Tú lo escribes | El ingeniero |
+
+**Lo que tienes que copiar (Bloque 1):** el documento de SharePoint **Arquitectura objetivo —
+Devolución omnicanal**. No el `ADR-014-returns-orchestration.md` del repo — ese Copilot ya lo tiene
+en el workspace, así que pegarlo no demuestra nada. El de SharePoint es el que trae el diagrama de
+componentes y los cinco principios, y **es el único que dice explícitamente que la app móvil
+"solo captura intención y presenta estatus"** — que es literalmente la justificación de que este
+endpoint sea de solo lectura. Esa frase es el porqué de toda la escena.
+
+> ⚠️ **Cópialo de SharePoint, no lo guardes dentro del repo.** Si lo dejas en una carpeta del
+> workspace, Copilot lo lee solo y el gesto de pegarlo se vuelve teatro. Si quieres un respaldo
+> local por si SharePoint no carga, guárdalo **fuera** del repositorio.
+
+**Lo que tienes que agregarle (Bloque 2):** el documento de arquitectura no dice —ni debe decir—
+la ruta, el proyecto, el DTO, el 404, ni el test. Eso lo pones tú. **La línea de inyectar
+`IReturnRequestRepository` va textual**: sin ella Copilot se detiene a elegir entre dos diseños
+igual de válidos, y esa pausa en vivo no la quieres.
+
+**HACER:** cambiar a VS Code, abrir Copilot Agent Mode. **Pegar primero el Bloque 1** (el documento
+completo) y decir mientras se pega:
+
+> "Esto no lo escribí yo. Es el documento de arquitectura de Laura, tal como está en SharePoint."
+
+**Y a continuación escribir el Bloque 2:**
+
+> *"Con ese contexto, y considerando el incidente de noviembre de 2025
+> (`#file:docs/runbooks/incident-2025-11-return-fraud.md`), agrega el endpoint que falta hoy:
 > consultar el estatus de una devolución por ID.*
 >
 > *Requisitos:*
@@ -241,21 +310,41 @@ una respuesta que no salió en pantalla.)*
 
 **Mientras Copilot trabaja, DECIR:**
 
-> "Esto no es autocompletado. Está leyendo el ADR real, el incidente real, y las convenciones de
-> capas de este proyecto — y va a respetar todo eso sin que nadie se lo repita."
+> "Esto no es autocompletado. Está leyendo el documento de arquitectura que acabo de pegar, el
+> incidente real del repositorio, y las convenciones de capas de este proyecto — y va a respetar
+> todo eso sin que nadie se lo repita."
 
 **Cuando termine, HACER:** mostrar el endpoint nuevo, correr `dotnet test` en la terminal, mostrar
 verde. Mostrar el texto del PR que redactó.
 
+**Al mostrar el PR, DECIR (esto amarra el Bloque 1 con el resultado):**
+
+> "Y fíjense en la justificación que escribió: este endpoint es de solo lectura porque la app
+> presenta estatus, no decide. Eso no se lo dije yo — estaba en el documento de arquitectura de
+> Laura, y Copilot lo usó como razón de diseño."
+
 **Frase de cierre de escena:**
 
 > "La conversación no terminó en una minuta. Se convirtió, en minutos, en un cambio de software
-> real, probado, y listo para revisión."
+> real, probado, y listo para revisión. Y esa caja de búsqueda que no servía, ahora tiene algo
+> detrás. En un momento se los voy a probar."
+
+> **No vuelvas a la consola todavía.** Sofía aún no ha creado su caso —eso pasa en la Escena 3—, así
+> que buscar ahora daría "no encontrado" otra vez y desinflaría el momento. El pago va en la Escena
+> 4, con su folio real. Esa promesa es lo que amarra las tres escenas.
 
 *(Fallback: si Copilot titubea en la decisión de diseño de dónde inyectar el repositorio, el
 prompt ya lo especifica explícitamente — no debería pasar. Si el build/test tarda o falla, ten
 el repo del ensayo previo como respaldo mental de cómo se ve el resultado correcto, pero no lo
 muestres — deja que esto sea genuinamente en vivo.)*
+
+> ⚠️ **Pendiente de ensayo.** El **11/11 en verde está verificado con el prompt anterior**, donde
+> el contexto era un párrafo tecleado a mano, no el documento de SharePoint pegado. El Bloque 2 es
+> idéntico al verificado, así que el riesgo es bajo — pero cambiar lo que el modelo lee antes de
+> decidir sí puede mover el resultado. **Córrelo una vez completo en un worktree aislado antes de
+> presentar**, y verifica en concreto que el mensaje del PR **siga citando el incidente de
+> noviembre**: eso es lo primero que se degrada al quitar el incidente del texto tecleado. Si en el
+> ensayo deja de citarlo, vuelve al prompt anterior — está en el historial de este archivo.
 
 ---
 
@@ -327,13 +416,22 @@ vivo.)*
 **HACER:** cambiar/mostrar Operations Console (`localhost:5174`), asegurándose de que la pantalla
 de Mi Palacio (Escena 3) siga visible al mismo tiempo (dos monitores, o pantalla dividida).
 
-**HACER:** pegar el folio real de Sofía en **"Buscar por folio / ID de caso"** (cópialo con
-anticipación — se ve en Mi Palacio como "SOLICITUD XXXXXXXX", pero necesitas el ID completo;
-tenlo ya en el portapapeles antes de llegar a esta escena). Clic en **Buscar**.
+**HACER:** pegar el folio real de Sofía en **"Buscar por folio / ID de caso"** y clic en **Buscar**.
 
-**DECIR:**
+> **Para copiar el folio usa el botón "Copiar folio"** que está junto a "Solicitud ########" en Mi
+> Palacio. En pantalla el folio se muestra abreviado a 8 caracteres —un Guid de 36 no es algo que se
+> le enseñe a una clienta— pero el botón copia el **completo**, que es lo que la API exige.
+>
+> ⚠️ **Nunca lo selecciones a mano, y menos con doble clic.** Un doble clic sobre un Guid selecciona
+> solo el primer segmento, y con un folio parcial la ruta `{id:guid}` no coincide: la búsqueda
+> responde 404 y en pantalla sale "No se encontró ese folio" — en el peor momento posible. Esto pasó
+> de verdad en el ensayo del 11 de agosto de 2026.
 
-> "Este es el caso real de Sofía — el mismo que acabamos de crear, no uno de ejemplo."
+**DECIR (cobra la promesa de la Escena 2 — no te la saltes, es el arco completo):**
+
+> "Esta es la misma caja que hace cinco minutos no encontraba nada. Ahora tiene detrás el endpoint
+> que Copilot construyó frente a ustedes. Y esto que trajo es el caso real de Sofía — el mismo que
+> acabamos de crear, no uno de ejemplo."
 
 **HACER:** clic en **"Recibir artículo"**. **Pausa. Señala la otra pantalla.**
 
@@ -546,11 +644,21 @@ abiertas. Si vas retrasado, es lo primero que se recorta de la escena.
 
 **HACER:** cambiar a la pestaña del **issue #9** en GitHub. Señalar el campo de asignado.
 
-**DECIR:**
+**DECIR (la procedencia del issue importa — no la omitas, el autor se ve en pantalla):**
 
-> "Este issue está en el repositorio desde antes de esta reunión. Y miren quién lo tiene asignado:
-> no es una persona. Es Copilot. Se le asignó un issue exactamente como se le asigna a alguien del
-> equipo."
+> "Este issue lo abrió Jorge hace semanas, por una corazonada de code review. Y ahí se quedó. No
+> porque a nadie le importara, sino porque es un fallo de uno en quinientos, imposible de
+> reproducir a mano — de los que se cierran a los seis meses como 'no se pudo replicar'. Todos
+> tienen uno de estos en su backlog.
+>
+> Y miren quién lo tiene asignado: no es una persona. Es Copilot. Se le asignó exactamente como se
+> le asigna a alguien del equipo."
+
+> ℹ️ **Por qué esta línea existe.** El autor del issue se ve en pantalla, así que no se puede
+> insinuar que lo levantó el SRE Agent — de hecho **no pudo haberlo hecho**: la race condition
+> aparece ~1 vez cada 400-700 inspecciones y por eso el propio runbook dice que no planees mostrarla
+> en telemetría. Atribuirlo a una corazonada humana es lo que de verdad pasó y además le da a este
+> tiempo un argumento propio, que no compite con los otros dos agentes.
 
 **HACER:** cambiar a la pestaña del **PR #10**. Señalar tres cosas, sin leer el diff completo: la
 rama que creó él, el test de concurrencia, y los checks de `dotnet-ci` en verde.
