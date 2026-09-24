@@ -1,0 +1,169 @@
+name: azure-deploy
+
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-deploy-main
+  cancel-in-progress: false
+
+env:
+  AZURE_RESOURCE_GROUP: rg-palacio-returns-demo
+  AZURE_LOCATION: eastus
+  AZURE_STATIC_WEB_APPS_LOCATION: eastus2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            web/mi-palacio/package-lock.json
+            web/operations-console/package-lock.json
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Restore, build and test backend
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Ensure resource group
+        run: |
+          az group create \
+            --name "$AZURE_RESOURCE_GROUP" \
+            --location "$AZURE_LOCATION" \
+            --output none
+
+      - name: Provision or update Azure infrastructure
+        shell: pwsh
+        run: |
+          $outputs = az deployment group create `
+            --resource-group $env:AZURE_RESOURCE_GROUP `
+            --template-file infra/main.bicep `
+            --parameters infra/main.parameters.json `
+            --query properties.outputs `
+            -o json | ConvertFrom-Json
+
+          "API_APP_NAME=$($outputs.appName.value)" >> $env:GITHUB_ENV
+          "API_URL=$($outputs.appUrl.value)" >> $env:GITHUB_ENV
+          "MI_PALACIO_STATIC_NAME=$($outputs.miPalacioStaticName.value)" >> $env:GITHUB_ENV
+          "MI_PALACIO_URL=$($outputs.miPalacioUrl.value)" >> $env:GITHUB_ENV
+          "OPERATIONS_STATIC_NAME=$($outputs.operationsStaticName.value)" >> $env:GITHUB_ENV
+          "OPERATIONS_URL=$($outputs.operationsUrl.value)" >> $env:GITHUB_ENV
+
+      - name: Publish backend artifact
+        run: |
+          dotnet publish src/Palacio.Returns.Api/Palacio.Returns.Api.csproj \
+            --configuration Release \
+            --no-build \
+            --output .azure/publish/api
+          cd .azure/publish/api
+          zip -r ../retailiq-returns-api.zip .
+
+      - name: Deploy backend API
+        run: |
+          az webapp deploy \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$API_APP_NAME" \
+            --src-path .azure/publish/retailiq-returns-api.zip \
+            --type zip \
+            --async false
+
+      - name: Install Mi Palacio dependencies
+        run: npm ci --prefix web/mi-palacio
+
+      - name: Build Mi Palacio
+        shell: pwsh
+        run: |
+          $env:VITE_RETURNS_API_BASE_URL = $env:API_URL
+          if ("${{ vars.VITE_CONCIERGE_PROXY_URL }}" -ne "") {
+            $env:VITE_CONCIERGE_PROXY_URL = "${{ vars.VITE_CONCIERGE_PROXY_URL }}"
+          }
+          npm run build --prefix web/mi-palacio
+
+      - name: Deploy Mi Palacio
+        shell: pwsh
+        run: |
+          $token = az staticwebapp secrets list `
+            --name $env:MI_PALACIO_STATIC_NAME `
+            --resource-group $env:AZURE_RESOURCE_GROUP `
+            --query properties.apiKey `
+            -o tsv
+          npx -y @azure/static-web-apps-cli@latest deploy web/mi-palacio/dist `
+            --deployment-token $token `
+            --env production
+
+      - name: Install Operations Console dependencies
+        run: npm ci --prefix web/operations-console
+
+      - name: Build Operations Console
+        shell: pwsh
+        run: |
+          $env:VITE_RETURNS_API_BASE_URL = $env:API_URL
+          npm run build --prefix web/operations-console
+
+      - name: Deploy Operations Console
+        shell: pwsh
+        run: |
+          $token = az staticwebapp secrets list `
+            --name $env:OPERATIONS_STATIC_NAME `
+            --resource-group $env:AZURE_RESOURCE_GROUP `
+            --query properties.apiKey `
+            -o tsv
+          npx -y @azure/static-web-apps-cli@latest deploy web/operations-console/dist `
+            --deployment-token $token `
+            --env production
+
+      - name: Verify deployed API
+        shell: pwsh
+        run: |
+          $body = @{
+            orderId = 'PH-2026-048213'
+            customerId = 'sofia-rivera'
+            productCategory = 'Vestidos'
+            purchaseAmount = 32500
+          } | ConvertTo-Json
+
+          $created = Invoke-RestMethod `
+            -Uri "$env:API_URL/api/returns" `
+            -Method Post `
+            -ContentType 'application/json' `
+            -Body $body
+
+          $fetched = Invoke-RestMethod -Uri "$env:API_URL/api/returns/$($created.id)"
+          if ($fetched.id -ne $created.id) {
+            throw "GET /api/returns/{id} did not return the created return."
+          }
+
+      - name: Deployment summary
+        run: |
+          echo "### Azure deployment completed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Backend API: $API_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mi Palacio: $MI_PALACIO_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Operations Console: $OPERATIONS_URL" >> "$GITHUB_STEP_SUMMARY"

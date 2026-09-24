@@ -41,3 +41,9 @@ appsettings.Local.json
 Untitled-*.json
 *credentials*.json
 *secret*.json
+
+## Azure deployment outputs generated locally
+.azure/publish/
+.azure/validate-status.json
+infra/*.json
+!infra/*.parameters.json

@@ -6,10 +6,10 @@ import type {
 
 /**
  * Cliente HTTP fino sobre Palacio.Returns.Api (ver docs/constitution.md §3.1).
- * La API real corre en http://localhost:5163 (perfil `http` de `dotnet run`, ver launchSettings.json).
+ * La API real corre en http://localhost:5163 localmente o en la URL configurada para despliegue.
  * Solo existen 3 endpoints POST hoy — no existe ningún GET (ver README del proyecto).
  */
-const API_BASE_URL = "http://localhost:5163";
+const API_BASE_URL = import.meta.env.VITE_RETURNS_API_BASE_URL ?? "http://localhost:5163";
 
 export class ApiError extends Error {
   status?: number;
