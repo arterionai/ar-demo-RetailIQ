@@ -25,12 +25,20 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(DemoWebClients, policy =>
     {
+        var configuredOrigins = builder.Configuration["DEMO_ALLOWED_ORIGINS"]?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            ?? [];
+        var allowedOrigins = new[] { "http://localhost:5173", "http://localhost:5174" }
+            .Concat(configuredOrigins)
+            .Distinct()
+            .ToArray();
+
         // AllowCredentials es necesario para el hub de SignalR (ReturnStatusHub): el cliente
         // @microsoft/signalr manda credentials: 'include' por defecto en la petición de
         // negotiate, y el navegador rechaza esa respuesta si el servidor no lo permite
         // explícitamente (no se puede combinar con AllowAnyOrigin, por eso WithOrigins es
         // explícito con la lista de puertos de los frontends de la demo).
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
